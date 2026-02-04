@@ -6,13 +6,12 @@ tracker = WindowTracker("League of Legends")
 
 while True:
     rect = tracker.get_window_rect()
-    if rect is None:
-        print("롤 클라이언트 찾을 수 없음")
-    elif rect and tracker.hwnd:
+    if rect and tracker.hwnd:
         x, y, w, h = rect
-        print(f"창 위치: ({x},{y}) 크기: {w}x{h}")
         img = capture_window(tracker.hwnd, w, h)
         img.save("test_capture.png")
         print("롤 클라이언트 캡처 성공")
-
-    time.sleep(0.3)
+        break
+    else:
+        print("롤 클라이언트 없음")
+        time.sleep(1)
