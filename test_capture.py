@@ -11,11 +11,11 @@ while True:
     if rect and tracker.hwnd:
         x, y, w, h = rect
         img = capture_window(tracker.hwnd, w, h)
-        img.save("test_capture.png")
+        img.save("captured_images/test_capture.png")
 
         #roi_img = crop_roi_definite_xy(img, 0, 0, 800, 450)
         roi_img = crop_roi_relative_xy(img, rect ,ROI["banpick_status_text"])
-        roi_img.save("test_roi_capture.png")
+        roi_img.save("captured_images/test_roi_capture.png")
 
         print("롤 클라이언트 캡처 성공")
         break

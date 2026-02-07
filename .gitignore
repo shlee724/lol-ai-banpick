@@ -3,3 +3,5 @@
 config/__pycache__
 test_capture.png
 test_roi_capture.png
+captured_images/*
+!captured_images/.gitkeep
