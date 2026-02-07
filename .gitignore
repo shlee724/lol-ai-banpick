@@ -1,8 +1,21 @@
-/my_env
-/core/__pycache__
-config/__pycache__
-tests/__pycache__
-test_capture.png
-test_roi_capture.png
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environments
+my_env/
+.venv/
+env/
+
+# Generated images / outputs
 captured_images/*
 !captured_images/.gitkeep
+*.png
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
