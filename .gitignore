@@ -13,6 +13,7 @@ captured_images/**
 !captured_images/test_images/
 !captured_images/test_images/banpick_status/
 !captured_images/test_images/lol_client/
+!captured_images/test_images/banned_slots/.gitkeep
 !captured_images/test_images/banpick_status/.gitkeep
 !captured_images/test_images/lol_client/.gitkeep
 *.png
