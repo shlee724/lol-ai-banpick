@@ -1,3 +1,5 @@
 /my_env
 /core/__pycache__
+config/__pycache__
 test_capture.png
+test_roi_capture.png

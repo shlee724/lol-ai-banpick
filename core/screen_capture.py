@@ -42,3 +42,10 @@ def capture_window(hwnd: int, width: int, height: int) -> Image.Image:
 
     return Image.fromarray(img)
 
+def crop_roi(img: Image.Image, x: int, y: int, w: int, h: int) -> Image.Image:
+    """
+    img: 전체 캡처 이미지
+    x, y: 좌상단 기준 좌표
+    w, h: ROI 크기
+    """
+    return img.crop((x, y, x + w, y + h))
