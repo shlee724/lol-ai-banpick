@@ -9,6 +9,10 @@ from pipeline.buffer import StateBuffer
 from pipeline.state_manager import StableStateManager
 from pipeline.pick_stage_detector import detect_pick_kind_from_banned_strips
 from core.ocr_engine import extract_text
+from core.gemini_vision import analyze_image_json
+from config.prompts import PICKED_CHAMPS_WITH_ROLES_PROMPT
+from core.draft_schema import normalize_picks_with_roles
+from PIL import Image
 import time
 
 tracker = WindowTracker("League of Legends")
@@ -19,6 +23,15 @@ state_manager = StableStateManager(
     min_duration=1.0,
     min_confidence=0.7
 )
+
+def merge_images_horizontal(img1: Image.Image, img2: Image.Image, bg_color=(255, 255, 255)) -> Image.Image:
+    new_width = img1.width + img2.width
+    new_height = max(img1.height, img2.height)
+
+    new_img = Image.new("RGB", (new_width, new_height), bg_color)
+    new_img.paste(img1, (0, 0))
+    new_img.paste(img2, (img1.width, 0))
+    return new_img
 
 while True:
     rect = tracker.get_window_rect()
@@ -32,8 +45,12 @@ while True:
 
         status_img = crop_roi_relative_xy(img, rect ,ROI["banpick_status_text"])   #밴픽 상태메시지 캡처
         status_img.save(PATHS["BANPICK_STATUS_TEXT_CAPTURE"])
-        my_banned = crop_roi_relative_xy(img, rect, ROI["banned_champions_area_my_team"])
-        enemy_banned = crop_roi_relative_xy(img, rect, ROI["banned_champions_area_enemy_team"])
+        my_banned_img = crop_roi_relative_xy(img, rect, ROI["banned_champions_area_my_team"])
+        enemy_banned_img = crop_roi_relative_xy(img, rect, ROI["banned_champions_area_enemy_team"])
+        my_picked_img = crop_roi_relative_xy(img, rect, ROI["picked_champions_area_my_team"])
+        enemy_picked_img = crop_roi_relative_xy(img, rect, ROI["picked_champions_area_enemy_team"])
+        total_banned_img = merge_images_horizontal(my_banned_img, enemy_banned_img)
+        total_picked_img = merge_images_horizontal(my_picked_img, enemy_picked_img)
 
         # OCR
         text = extract_text(status_img)
@@ -50,11 +67,19 @@ while True:
         print(f" StableState → {stable_state}") 
 
         if stable_state == "PICK":
-            pick_res = detect_pick_kind_from_banned_strips(my_banned, enemy_banned, std_threshold=25.0)
+            pick_res = detect_pick_kind_from_banned_strips(my_banned_img, enemy_banned_img, std_threshold=25.0)
             print("PICK 판정:", pick_res.kind, "std:", round(pick_res.std, 2))
 
             if pick_res.kind == "PICK_REAL":
                 # 진짜 픽 단계 로직 실행
-                pass
+                # 제미나이 api에 픽 정보 보내기
+                raw = analyze_image_json(total_picked_img, prompt=PICKED_CHAMPS_WITH_ROLES_PROMPT, model="gemini-2.5-flash")
+                picked = normalize_picks_with_roles(raw)
+                print(picked.my_team)     # {"top": "...", "jungle": "...", ...}
+                print(picked.enemy_team)  # [..5..]     
+
+                #
+
+                break
 
     time.sleep(0.3)
