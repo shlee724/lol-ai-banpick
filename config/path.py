@@ -10,4 +10,5 @@ PATHS = {
     "GEN_TEST_LOL_CLIENT_CAPTURE": BASE_DIR / "captured_images" / "test_images" / "lol_client",
     "GEN_TEST_BANPICK_STATUS_CAPTURE": BASE_DIR / "captured_images" / "test_images" / "banpick_status",
     "TEST_BANNED_SLOTS": BASE_DIR / "captured_images" / "test_images" / "banned_slots",
+    "TEST_PICKED_CHAMPS": BASE_DIR / "captured_images" / "test_images" / "picked_champs",
 }

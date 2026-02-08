@@ -16,6 +16,7 @@ captured_images/**
 !captured_images/test_images/banned_slots/.gitkeep
 !captured_images/test_images/banpick_status/.gitkeep
 !captured_images/test_images/lol_client/.gitkeep
+!captured_images/test_images/picked_champs/.gitkeep
 *.png
 
 # IDE
