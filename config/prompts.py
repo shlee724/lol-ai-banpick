@@ -1,6 +1,5 @@
 # config/prompts.py
-
-# config/prompts.py
+import json
 
 PICKED_CHAMPS_WITH_ROLES_PROMPT = """
 You are analyzing League of Legends champion select.
@@ -50,42 +49,133 @@ Rules:
 - If unsure, use null.
 """.strip()
 
+BANNED_CHAMPS_10_PROMPT = """
+You are analyzing League of Legends champion select.
+This image shows 10 banned champion portraits in a single row (combined list).
+Do NOT try to split by team. Just identify the banned champions in order from left to right.
 
-DRAFT_ADVICE_PROMPT_TEMPLATE = """
-We are in LoL draft.
+Return ONLY valid JSON (no markdown, no extra text).
 
-My team (fixed roles):
-- TOP: {top}
-- JUNGLE: {jungle}
-- MID: {mid}
-- ADC: {adc}
-- SUPPORT: {support}
+Output JSON schema:
+{
+  "bans": [string|null, string|null, string|null, string|null, string|null,
+           string|null, string|null, string|null, string|null, string|null],
+  "notes": string
+}
 
-Enemy team picks (roles unknown): {enemy_picks}
+Rules:
+- Use official champion English names if possible (e.g., "Lee Sin", "Ahri").
+- If a slot is empty or uncertain, use null.
+- Keep the order left → right.
+""".strip()
 
-My team bans: {my_bans}
-Enemy team bans: {enemy_bans}
+DRAFT_RECOMMEND_PROMPT_TEMPLATE = """
+You are a League of Legends draft assistant.
 
-Give me draft advice:
-- suggested next pick (top 3) with role recommendation
-- suggested ban (top 3)
-- short reasoning
+User profile:
+- My fixed role: {my_role}
+- My tier: {my_tier}
+- My champion pool (preferred picks for my role): {my_champ_pool}
 
-Return ONLY valid JSON. No markdown.
+Current draft state:
+- My team picks (fixed roles):
+  TOP: {top}
+  JUNGLE: {jungle}
+  MID: {mid}
+  ADC: {adc}
+  SUPPORT: {support}
+
+- Enemy team picks (roles unknown): {enemy_picks}
+
+- Banned champions (10 combined, left to right): {bans_10}
+
+Task:
+1) Recommend the next pick for ME (my fixed role) based on the current draft state and bans.
+2) Only suggest champions from my champion pool if possible. If none are good/available, suggest outside pool but explain briefly.
+3) Do NOT suggest bans.
+
+Return ONLY valid JSON (no markdown, no extra text).
+
+Output JSON schema:
+{
+  "my_role": string,
+  "recommendations": [
+    {
+      "champion": string,
+      "confidence": number,
+      "reason": string
+    },
+    {
+      "champion": string,
+      "confidence": number,
+      "reason": string
+    },
+    {
+      "champion": string,
+      "confidence": number,
+      "reason": string
+    }
+  ],
+  "notes": string
+}
 """.strip()
 
 
-
-def build_draft_advice_prompt(
+def build_draft_recommend_prompt(
     *,
-    my_picks,
-    enemy_picks,
-    my_bans=None,
-    enemy_bans=None,
+    my_role: str,
+    my_tier: str,
+    my_champ_pool: list[str],
+    my_team: dict,
+    enemy_picks: list,
+    bans_10: list,
 ) -> str:
-    return DRAFT_ADVICE_PROMPT_TEMPLATE.format(
-        my_picks=my_picks,
-        enemy_picks=enemy_picks,
-        my_bans=my_bans or [],
-        enemy_bans=enemy_bans or [],
-    )
+    # 안전하게 문자열화 (따옴표/특수문자/None 등)
+    my_team_json = json.dumps(my_team, ensure_ascii=False)
+    enemy_json = json.dumps(enemy_picks, ensure_ascii=False)
+    bans_json = json.dumps(bans_10, ensure_ascii=False)
+    pool_json = json.dumps(my_champ_pool, ensure_ascii=False)
+
+    return f"""
+You are a League of Legends draft assistant.
+
+User profile:
+- My fixed role: {my_role}
+- My tier: {my_tier}
+- My champion pool (preferred picks for my role): {pool_json}
+
+Current draft state:
+- My team picks (fixed roles): {my_team_json}
+- Enemy team picks (roles unknown): {enemy_json}
+- Banned champions (10 combined, left to right): {bans_json}
+
+Task:
+1) Recommend the next pick for ME (my fixed role) based on the current draft state and bans.
+2) Prefer champions from my champion pool if possible. If none are good/available, you may suggest outside the pool but explain briefly.
+3) Do NOT suggest bans.
+
+Return ONLY valid JSON (no markdown, no extra text).
+
+Output JSON schema:
+{{
+  "my_role": string,
+  "recommendations": [
+    {{
+      "champion": string,
+      "confidence": number,
+      "reason": string
+    }},
+    {{
+      "champion": string,
+      "confidence": number,
+      "reason": string
+    }},
+    {{
+      "champion": string,
+      "confidence": number,
+      "reason": string
+    }}
+  ],
+  "notes": string
+}}
+""".strip()

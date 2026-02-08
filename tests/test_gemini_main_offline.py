@@ -16,9 +16,14 @@ from pipeline.state_manager import StableStateManager
 from pipeline.pick_stage_detector import detect_pick_kind_from_banned_strips
 
 from core.gemini_vision import analyze_image_json
-from config.prompts import PICKED_CHAMPS_WITH_ROLES_PROMPT
-from core.draft_schema import normalize_picks_with_roles
+from config.prompts import PICKED_CHAMPS_WITH_ROLES_PROMPT, BANNED_CHAMPS_10_PROMPT
+from core.draft_schema import normalize_bans10, normalize_picks_with_roles
+from config.prompts import build_draft_recommend_prompt
+from core.gemini_text import generate_text_json
 
+MY_ROLE = "MID"   # TOP/JUNGLE/MID/ADC/SUPPORT 중 하나로 고정
+MY_TIER = "BRONZE"     # UNRANKED/IRON/BRONZE/SILVER/GOLD/PLATINUM/EMERALD/DIAMOND/MASTER/GRANDMASTER/CHALLENGER
+MY_CHAMP_POOL = ["Malzahar", "Oriana", "Galio", "Mundo", "Garen"]  # 예시
 
 TS_PATTERN = re.compile(r".*_(\d{10,})\.(png|jpg|jpeg)$", re.IGNORECASE)
 
@@ -100,10 +105,10 @@ def run_offline_gemini_test(
 
             my_banned_img = crop_roi_relative_xy(img, rect, ROI["banned_champions_area_my_team"])
             enemy_banned_img = crop_roi_relative_xy(img, rect, ROI["banned_champions_area_enemy_team"])
+            total_banned_img = merge_images_horizontal(my_banned_img, enemy_banned_img)
 
             my_picked_img = crop_roi_relative_xy(img, rect, ROI["picked_champions_area_my_team"])
             enemy_picked_img = crop_roi_relative_xy(img, rect, ROI["picked_champions_area_enemy_team"])
-
             total_picked_img = merge_images_horizontal(my_picked_img, enemy_picked_img)
 
             # === OCR + pipeline ===
@@ -127,39 +132,31 @@ def run_offline_gemini_test(
                 print(" PICK 판정:", pick_res.kind, "std:", round(pick_res.std, 2))
 
                 if pick_res.kind == "PICK_REAL":
-                    now = time.time()
+                    # 진짜 픽 단계 로직 실행
+                    # 제미나이 api에 픽 정보 보내기
+                    raw = analyze_image_json(total_picked_img, prompt=PICKED_CHAMPS_WITH_ROLES_PROMPT, model="gemini-2.5-flash")
+                    picked = normalize_picks_with_roles(raw)
+                    print(picked.my_team)     # {"top": "...", "jungle": "...", ...}
+                    print(picked.enemy_team)  # [..5..]     
 
-                    # 1) 쿨다운
-                    if now - last_gemini_call_ts < gemini_cooldown_sec:
-                        print(" ⏭ Gemini 스킵(쿨다운)")
-                    # 2) 호출 상한
-                    elif gemini_calls >= max_gemini_calls:
-                        print(" ⛔ Gemini 호출 상한 도달, 종료")
-                        break
-                    else:
-                        # 3) 간단 시그니처로 동일 프레임 반복 호출 방지
-                        #    (여기서는 파일명+std 정도만)
-                        signature = (img_path.name, round(pick_res.std, 2))
-                        if signature == last_sent_signature:
-                            print(" ⏭ Gemini 스킵(동일 시그니처)")
-                        else:
-                            print(" 🤖 Gemini Vision 호출 중...")
+                    # 제미나이 api에 밴 정보 보내기
+                    raw = analyze_image_json(total_banned_img, prompt=BANNED_CHAMPS_10_PROMPT, model="gemini-2.5-flash")
+                    bans10 = normalize_bans10(raw)
+                    print(bans10.bans)
+                    
+                    # 제미나이 api에 밴픽 추천
+                    prompt = build_draft_recommend_prompt(
+                        my_role=MY_ROLE,
+                        my_tier=MY_TIER,
+                        my_champ_pool=MY_CHAMP_POOL,
+                        my_team=picked.my_team,
+                        enemy_picks=picked.enemy_team,
+                        bans_10=bans10.bans,
+                    )
 
-                            raw = analyze_image_json(
-                                total_picked_img,
-                                prompt=PICKED_CHAMPS_WITH_ROLES_PROMPT,
-                                model=model,
-                            )
-                            picked = normalize_picks_with_roles(raw)
+                    rec = generate_text_json(prompt, model="gemini-2.5-flash")
+                    print("📌 추천:", rec)
 
-                            print(" ✅ Gemini 결과(my_team):", picked.my_team)
-                            print(" ✅ Gemini 결과(enemy_team):", picked.enemy_team)
-                            if picked.notes:
-                                print(" 📝 notes:", picked.notes)
-
-                            last_gemini_call_ts = now
-                            gemini_calls += 1
-                            last_sent_signature = signature
                     break
 
             print("-" * 70)

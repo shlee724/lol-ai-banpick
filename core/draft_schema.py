@@ -53,3 +53,23 @@ def normalize_picks_with_roles(data: Dict[str, Any]) -> PickedWithRoles:
         norm_enemy.append(None)
 
     return PickedWithRoles(my_team=norm_my, enemy_team=norm_enemy, notes=notes)
+
+@dataclass
+class Bans10:
+    bans: List[Optional[str]]  # len 10
+    notes: str = ""
+
+
+def normalize_bans10(data: Dict[str, Any]) -> Bans10:
+    bans = data.get("bans") or []
+    notes = data.get("notes") or ""
+
+    norm: List[Optional[str]] = []
+    if isinstance(bans, list):
+        for x in bans[:10]:
+            norm.append(x if isinstance(x, str) and x.strip() else None)
+
+    while len(norm) < 10:
+        norm.append(None)
+
+    return Bans10(bans=norm, notes=notes)
