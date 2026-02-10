@@ -130,52 +130,54 @@ def build_draft_recommend_prompt(
     enemy_picks: list,
     bans_10: list,
 ) -> str:
-    # 안전하게 문자열화 (따옴표/특수문자/None 등)
     my_team_json = json.dumps(my_team, ensure_ascii=False)
     enemy_json = json.dumps(enemy_picks, ensure_ascii=False)
     bans_json = json.dumps(bans_10, ensure_ascii=False)
     pool_json = json.dumps(my_champ_pool, ensure_ascii=False)
 
     return f"""
-You are a League of Legends draft assistant.
+너는 **리그 오브 레전드 한국 서버(KR) 기준** 밴픽 도우미야.
+아래 정보들을 보고, **내 고정 포지션**에서 다음 픽 추천을 해줘.
 
-User profile:
-- My fixed role: {my_role}
-- My tier: {my_tier}
-- My champion pool (preferred picks for my role): {pool_json}
+[유저 정보]
+- 내 고정 포지션: {my_role}
+- 내 티어(한국 서버 기준): {my_tier}
+- 내 챔프폭(가능하면 여기서 우선 추천): {pool_json}
 
-Current draft state:
-- My team picks (fixed roles): {my_team_json}
-- Enemy team picks (roles unknown): {enemy_json}
-- Banned champions (10 combined, left to right): {bans_json}
+[현재 밴픽 상황]
+- 우리팀 픽(포지션 고정): {my_team_json}
+- 상대팀 픽(포지션 미확정): {enemy_json}
+- 밴된 챔피언 10개(왼→오, 팀 구분 없음): {bans_json}
 
-Task:
-1) Recommend the next pick for ME (my fixed role) based on the current draft state and bans.
-2) Prefer champions from my champion pool if possible. If none are good/available, you may suggest outside the pool but explain briefly.
-3) Do NOT suggest bans.
+[요구사항]
+1) **추천은 내 포지션({my_role})의 챔피언**만 해줘.
+2) 가능한 한 **내 챔프폭**에서 추천해줘. (없거나 밴/픽으로 불가능하면 챔프폭 밖도 가능)
+3) **밴 추천은 절대 하지 마.**
+4) 설명(reason, notes)은 **반드시 한글**로 작성해.
+5) 챔피언 이름은 데이터 처리 편의를 위해 **공식 영문명**으로 출력해.
 
-Return ONLY valid JSON (no markdown, no extra text).
+반환은 JSON만. 마크다운 금지. 추가 텍스트 금지.
 
-Output JSON schema:
+출력 JSON 스키마:
 {{
   "my_role": string,
   "recommendations": [
     {{
       "champion": string,
       "confidence": number,
-      "reason": string
+      "reason_kr": string
     }},
     {{
       "champion": string,
       "confidence": number,
-      "reason": string
+      "reason_kr": string
     }},
     {{
       "champion": string,
       "confidence": number,
-      "reason": string
+      "reason_kr": string
     }}
   ],
-  "notes": string
+  "notes_kr": string
 }}
 """.strip()

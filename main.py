@@ -29,7 +29,7 @@ state_manager = StableStateManager(
 
 MY_ROLE = "MID"   # TOP/JUNGLE/MID/ADC/SUPPORT 중 하나로 고정
 MY_TIER = "BRONZE"     # UNRANKED/IRON/BRONZE/SILVER/GOLD/PLATINUM/EMERALD/DIAMOND/MASTER/GRANDMASTER/CHALLENGER
-MY_CHAMP_POOL = ["Malzahar", "Oriana", "Galio", "Mundo", "Garen"]  # 예시
+MY_CHAMP_POOL = ["Malzahar", "Oriana", "Galio", "Mundo", "Garen", "Malphite", "Cho'gath", "Nasus"]  # 예시
 
 def merge_images_horizontal(img1: Image.Image, img2: Image.Image, bg_color=(255, 255, 255)) -> Image.Image:
     new_width = img1.width + img2.width
