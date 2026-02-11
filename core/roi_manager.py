@@ -8,13 +8,13 @@ def crop_roi_definite_xy(img: Image.Image, x: int, y: int, w: int, h: int) -> Im
     """
     return img.crop((x, y, x + w, y + h))
 
-def crop_roi_relative_xy(img: Image.Image, original_rect: tuple[int,int,int,int], roi: tuple[float, float, float, float]) -> Image.Image:
+def crop_roi_relative_xy(img: Image.Image, window_size: tuple[int,int], roi: tuple[float, float, float, float]) -> Image.Image:
     """
     img: 전체 캡처 이미지
-    original_rect: 전체 캡처 이미지의 rect값 (x, y, w, h)
+    window_size: 전체 캡처 이미지의 사이즈 (w, h)
     roi: 원본 이미지 기준 상대적인 위치 (x, y, w, h)
     """
-    o_x, o_y, o_w, o_h = original_rect
+    o_w, o_h = window_size
     r_x, r_y, r_w, r_h = roi
     target_x = o_w * r_x
     target_y = o_h * r_y
