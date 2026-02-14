@@ -6,7 +6,7 @@ from config.path import PATHS
 
 
 def run_ban_detector_batch(std_threshold: float = 18.0):
-    img_dir: Path = PATHS["TEST_BANNED_SLOTS"]
+    img_dir: Path = PATHS.TEST_BANNED_SLOTS
 
     if not img_dir.exists():
         print("❌ banned_slots 폴더 없음:", img_dir)

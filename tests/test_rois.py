@@ -6,8 +6,8 @@ from core.roi_manager import crop_roi_relative_xy
 
 
 def run_batch_banned_slots_roi_cut():
-    img_dir: Path = PATHS["GEN_TEST_LOL_CLIENT_CAPTURE"]
-    save_dir: Path = PATHS["TEST_BANNED_SLOTS"]
+    img_dir: Path = PATHS.GEN_TEST_LOL_CLIENT_CAPTURE
+    save_dir: Path = PATHS.TEST_BANNED_SLOTS
 
     if not img_dir.exists():
         print("❌ 테스트 이미지 폴더 없음:", img_dir)
@@ -46,8 +46,8 @@ def run_batch_banned_slots_roi_cut():
     return results
 
 def run_batch_picked_champs_roi_cut():
-    img_dir: Path = PATHS["GEN_TEST_LOL_CLIENT_CAPTURE"]
-    save_dir: Path = PATHS["TEST_PICKED_CHAMPS"]
+    img_dir: Path = PATHS.GEN_TEST_LOL_CLIENT_CAPTURE
+    save_dir: Path = PATHS.TEST_PICKED_CHAMPS
 
     if not img_dir.exists():
         print("❌ 테스트 이미지 폴더 없음:", img_dir)
