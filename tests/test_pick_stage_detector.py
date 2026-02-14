@@ -75,12 +75,12 @@ def run_offline_like_main(
 
             # crop_roi_relative_xy가 rect의 w/h를 쓸 가능성이 높아서
             # 테스트에서는 (0,0, img.width, img.height)로 넣어줌
-            rect = (0, 0, img.width, img.height)
+            window_size = (img.width, img.height)
 
             # main.py와 동일 ROI crop :contentReference[oaicite:2]{index=2}
-            status_img = crop_roi_relative_xy(img, rect, ROI["banpick_status_text"])
-            my_banned = crop_roi_relative_xy(img, rect, ROI["banned_champions_area_my_team"])
-            enemy_banned = crop_roi_relative_xy(img, rect, ROI["banned_champions_area_enemy_team"])
+            status_img = crop_roi_relative_xy(img, window_size, ROI["banpick_status_text"])
+            my_banned = crop_roi_relative_xy(img, window_size, ROI["banned_champions_area_my_team"])
+            enemy_banned = crop_roi_relative_xy(img, window_size, ROI["banned_champions_area_enemy_team"])
 
             # OCR
             text = extract_text(status_img)

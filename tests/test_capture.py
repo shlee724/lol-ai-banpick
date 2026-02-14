@@ -12,10 +12,11 @@ while True:
     rect = tracker.get_window_rect()
     if rect and tracker.hwnd:
         x, y, w, h = rect
+        window_size = (w, h)
         img = capture_window(tracker.hwnd, w, h)
         img.save(PATHS.LOL_CLIENT_CAPTURE)
 
-        roi_img = crop_roi_relative_xy(img, rect ,ROI["banpick_status_text"])
+        roi_img = crop_roi_relative_xy(img, window_size ,ROI["banpick_status_text"])
         roi_img.save(PATHS.BANPICK_STATUS_TEXT_CAPTURE)
 
         text = extract_text(roi_img)

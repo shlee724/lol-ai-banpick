@@ -98,17 +98,17 @@ def run_offline_gemini_test(
     for idx, img_path in enumerate(img_files):
         try:
             img = Image.open(img_path)
-            rect = (0, 0, img.width, img.height)  # 테스트에서는 이미지 전체를 윈도우로 가정
+            window_size = (img.width, img.height)  # 테스트에서는 이미지 전체를 윈도우로 가정
 
             # === ROI crop (main.py와 동일한 흐름) ===
-            status_img = crop_roi_relative_xy(img, rect, ROI["banpick_status_text"])
+            status_img = crop_roi_relative_xy(img, window_size, ROI["banpick_status_text"])
 
-            my_banned_img = crop_roi_relative_xy(img, rect, ROI["banned_champions_area_my_team"])
-            enemy_banned_img = crop_roi_relative_xy(img, rect, ROI["banned_champions_area_enemy_team"])
+            my_banned_img = crop_roi_relative_xy(img, window_size, ROI["banned_champions_area_my_team"])
+            enemy_banned_img = crop_roi_relative_xy(img, window_size, ROI["banned_champions_area_enemy_team"])
             total_banned_img = merge_images_horizontal(my_banned_img, enemy_banned_img)
 
-            my_picked_img = crop_roi_relative_xy(img, rect, ROI["picked_champions_area_my_team"])
-            enemy_picked_img = crop_roi_relative_xy(img, rect, ROI["picked_champions_area_enemy_team"])
+            my_picked_img = crop_roi_relative_xy(img, window_size, ROI["picked_champions_area_my_team"])
+            enemy_picked_img = crop_roi_relative_xy(img, window_size, ROI["picked_champions_area_enemy_team"])
             total_picked_img = merge_images_horizontal(my_picked_img, enemy_picked_img)
 
             # === OCR + pipeline ===
