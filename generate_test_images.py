@@ -21,13 +21,13 @@ while True:
         # 전체 화면 캡처
         img = capture_window(tracker.hwnd, w, h)
 
-        lol_path = PATHS.GEN_TEST_LOL_CLIENT_CAPTURE / f"lol_client_{timestamp}.png"
+        lol_path = PATHS.TEST_LOL_CLIENT_DIR / f"lol_client_{timestamp}.png"
         img.save(lol_path)
 
         # ROI 캡처
         roi_img = crop_roi_relative_xy(img, rect, ROI["banpick_status_text"])
 
-        banpick_path = PATHS.GEN_TEST_BANPICK_STATUS_CAPTURE / f"banpick_status_{timestamp}.png"
+        banpick_path = PATHS.TEST_BANPICK_STATUS_DIR / f"banpick_status_{timestamp}.png"
         roi_img.save(banpick_path)
 
         print("테스트 이미지 생성:", timestamp)

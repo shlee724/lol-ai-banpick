@@ -59,8 +59,8 @@ while True:
         status_img = crop_roi_relative_xy(img, window_size ,ROI["banpick_status_text"])   #밴픽 상태메시지 캡처
 
         if DEBUG_SAVE:
-            img.save(PATHS.LOL_CLIENT_CAPTURE)
-            status_img.save(PATHS.BANPICK_STATUS_TEXT_CAPTURE)
+            img.save(PATHS.LOL_CLIENT_CAPTURE_PNG)
+            status_img.save(PATHS.BANPICK_STATUS_TEXT_CAPTURE_PNG)
 
         my_banned_img = crop_roi_relative_xy(img, window_size, ROI["banned_champions_area_my_team"])
         enemy_banned_img = crop_roi_relative_xy(img, window_size, ROI["banned_champions_area_enemy_team"])

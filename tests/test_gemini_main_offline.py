@@ -71,7 +71,7 @@ def run_offline_gemini_test(
     - gemini_cooldown_sec: Gemini 호출을 너무 자주 하지 않게 쿨다운.
     - max_gemini_calls: 테스트 중 호출 상한(요금 폭탄 방지).
     """
-    img_dir: Path = PATHS.GEN_TEST_LOL_CLIENT_CAPTURE
+    img_dir: Path = PATHS.TEST_LOL_CLIENT_DIR
     if not img_dir.exists():
         print("❌ lol_client 테스트 폴더 없음:", img_dir)
         return

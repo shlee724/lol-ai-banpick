@@ -14,10 +14,10 @@ while True:
         x, y, w, h = rect
         window_size = (w, h)
         img = capture_window(tracker.hwnd, w, h)
-        img.save(PATHS.LOL_CLIENT_CAPTURE)
+        img.save(PATHS.LOL_CLIENT_CAPTURE_PNG)
 
         roi_img = crop_roi_relative_xy(img, window_size ,ROI["banpick_status_text"])
-        roi_img.save(PATHS.BANPICK_STATUS_TEXT_CAPTURE)
+        roi_img.save(PATHS.BANPICK_STATUS_TEXT_CAPTURE_PNG)
 
         text = extract_text(roi_img)
         print("OCR 결과:", text)

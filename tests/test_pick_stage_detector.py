@@ -48,7 +48,7 @@ def run_offline_like_main(
     - simulate_timing=True면 파일명 timestamp 차이로 sleep을 흉내내서
       StableStateManager(min_duration)이 실제처럼 동작하게 함.
     """
-    img_dir: Path = PATHS.GEN_TEST_LOL_CLIENT_CAPTURE
+    img_dir: Path = PATHS.TEST_LOL_CLIENT_DIR
 
     if not img_dir.exists():
         print("❌ lol_client 테스트 폴더 없음:", img_dir)

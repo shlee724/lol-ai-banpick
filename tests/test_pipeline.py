@@ -20,7 +20,7 @@ state_manager = StableStateManager(
 
 
 def run_batch_ocr():
-    img_dir: Path = PATHS.GEN_TEST_BANPICK_STATUS_CAPTURE
+    img_dir: Path = PATHS.TEST_BANPICK_STATUS_DIR
 
     if not img_dir.exists():
         print("❌ 테스트 이미지 폴더 없음:", img_dir)
