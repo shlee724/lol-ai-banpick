@@ -116,4 +116,7 @@ while True:
                 print("📌 추천:", rec)
                 break
 
+        if stable_state == "PREPARE":
+            continue
+
     time.sleep(SLEEP_SEC)

@@ -14,6 +14,7 @@ class Paths:
 
     TEST_LOL_CLIENT_DIR: Path = TEST_IMAGES_DIR / "lol_client"
     TEST_BANPICK_STATUS_DIR: Path = TEST_IMAGES_DIR / "banpick_status"
+    TEST_BANPICK_TIMER_DIR: Path = TEST_IMAGES_DIR / "banpick_timer"
 
     TEST_BANNED_SLOTS_DIR: Path = TEST_IMAGES_DIR / "banned_slots"
     TEST_PICKED_CHAMPS_DIR: Path = TEST_IMAGES_DIR / "picked_champs"
