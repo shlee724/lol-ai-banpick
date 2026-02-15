@@ -78,9 +78,9 @@ def run_offline_like_main(
             window_size = (img.width, img.height)
 
             # main.py와 동일 ROI crop :contentReference[oaicite:2]{index=2}
-            status_img = crop_roi_relative_xy(img, window_size, ROI["banpick_status_text"])
-            my_banned = crop_roi_relative_xy(img, window_size, ROI["banned_champions_area_my_team"])
-            enemy_banned = crop_roi_relative_xy(img, window_size, ROI["banned_champions_area_enemy_team"])
+            status_img = crop_roi_relative_xy(img, window_size, ROI.BANPICK_STATUS_TEXT)
+            my_banned = crop_roi_relative_xy(img, window_size, ROI.BANNED_CHAMPIONS_MY_TEAM)
+            enemy_banned = crop_roi_relative_xy(img, window_size, ROI.BANNED_CHAMPIONS_ENEMY_TEAM)
 
             # OCR
             text = extract_text(status_img)

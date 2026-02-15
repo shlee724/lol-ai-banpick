@@ -29,8 +29,8 @@ def run_batch_banned_slots_roi_cut():
             img = Image.open(img_path)
 
             window_size = (1600, 900)
-            my_banned = crop_roi_relative_xy(img, window_size, ROI["banned_champions_area_my_team"])
-            enemy_banned = crop_roi_relative_xy(img, window_size, ROI["banned_champions_area_enemy_team"])
+            my_banned = crop_roi_relative_xy(img, window_size, ROI.BANNED_CHAMPIONS_MY_TEAM)
+            enemy_banned = crop_roi_relative_xy(img, window_size, ROI.BANNED_CHAMPIONS_ENEMY_TEAM)
 
             total_banned = merge_images_horizontal(my_banned, enemy_banned)
 
@@ -69,8 +69,8 @@ def run_batch_picked_champs_roi_cut():
             img = Image.open(img_path)
 
             window_size = (0, 0, 1600, 900)
-            my_picked = crop_roi_relative_xy(img, window_size, ROI["picked_champions_area_my_team"])
-            enemy_picked = crop_roi_relative_xy(img, window_size, ROI["picked_champions_area_enemy_team"])
+            my_picked = crop_roi_relative_xy(img, window_size, ROI.PICKED_CHAMPIONS_MY_TEAM)
+            enemy_picked = crop_roi_relative_xy(img, window_size, ROI.PICKED_CHAMPIONS_ENEMY_TEAM)
 
             total_picked = merge_images_horizontal(my_picked, enemy_picked)
 

@@ -23,7 +23,7 @@ from core.gemini_text import generate_text_json
 
 MY_ROLE = "MID"   # TOP/JUNGLE/MID/ADC/SUPPORT 중 하나로 고정
 MY_TIER = "BRONZE"     # UNRANKED/IRON/BRONZE/SILVER/GOLD/PLATINUM/EMERALD/DIAMOND/MASTER/GRANDMASTER/CHALLENGER
-MY_CHAMP_POOL = ["Malzahar", "Oriana", "Galio", "Mundo", "Garen"]  # 예시
+MY_CHAMP_POOL = ["Malzahar", "Oriana", "Galio", "Mundo", "Garen", "Malphite", "Cho'gath", "Nasus", "kassadin"]   # 예시
 
 TS_PATTERN = re.compile(r".*_(\d{10,})\.(png|jpg|jpeg)$", re.IGNORECASE)
 
@@ -101,14 +101,14 @@ def run_offline_gemini_test(
             window_size = (img.width, img.height)  # 테스트에서는 이미지 전체를 윈도우로 가정
 
             # === ROI crop (main.py와 동일한 흐름) ===
-            status_img = crop_roi_relative_xy(img, window_size, ROI["banpick_status_text"])
+            status_img = crop_roi_relative_xy(img, window_size, ROI.BANPICK_STATUS_TEXT)
 
-            my_banned_img = crop_roi_relative_xy(img, window_size, ROI["banned_champions_area_my_team"])
-            enemy_banned_img = crop_roi_relative_xy(img, window_size, ROI["banned_champions_area_enemy_team"])
+            my_banned_img = crop_roi_relative_xy(img, window_size, ROI.BANNED_CHAMPIONS_MY_TEAM)
+            enemy_banned_img = crop_roi_relative_xy(img, window_size, ROI.BANNED_CHAMPIONS_ENEMY_TEAM)
             total_banned_img = merge_images_horizontal(my_banned_img, enemy_banned_img)
 
-            my_picked_img = crop_roi_relative_xy(img, window_size, ROI["picked_champions_area_my_team"])
-            enemy_picked_img = crop_roi_relative_xy(img, window_size, ROI["picked_champions_area_enemy_team"])
+            my_picked_img = crop_roi_relative_xy(img, window_size, ROI.PICKED_CHAMPIONS_MY_TEAM)
+            enemy_picked_img = crop_roi_relative_xy(img, window_size, ROI.PICKED_CHAMPIONS_ENEMY_TEAM)
             total_picked_img = merge_images_horizontal(my_picked_img, enemy_picked_img)
 
             # === OCR + pipeline ===

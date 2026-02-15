@@ -25,7 +25,7 @@ while True:
         img.save(lol_path)
 
         # ROI 캡처
-        roi_img = crop_roi_relative_xy(img, rect, ROI["banpick_status_text"])
+        roi_img = crop_roi_relative_xy(img, rect, ROI.BANPICK_STATUS_TEXT)
 
         banpick_path = PATHS.TEST_BANPICK_STATUS_DIR / f"banpick_status_{timestamp}.png"
         roi_img.save(banpick_path)

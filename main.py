@@ -34,7 +34,7 @@ MODEL_TEXT = "gemini-2.5-flash"
 
 MY_ROLE = "MID"   # TOP/JUNGLE/MID/ADC/SUPPORT 중 하나로 고정
 MY_TIER = "BRONZE"     # UNRANKED/IRON/BRONZE/SILVER/GOLD/PLATINUM/EMERALD/DIAMOND/MASTER/GRANDMASTER/CHALLENGER
-MY_CHAMP_POOL = ["Malzahar", "Oriana", "Galio", "Mundo", "Garen", "Malphite", "Cho'gath", "Nasus"]  # 예시
+MY_CHAMP_POOL = ["Malzahar", "Oriana", "Galio", "Mundo", "Garen", "Malphite", "Cho'gath", "Nasus", "kassadin"]  # 예시
 
 DEBUG_SAVE = False
 
@@ -56,16 +56,16 @@ while True:
         window_size = (w, h)
         print(f"창 위치: ({x},{y}) 크기: {w}x{h}")
         img = capture_window(tracker.hwnd, w, h)        #롤 클라이언트 전체 이미지 (Image.Image)
-        status_img = crop_roi_relative_xy(img, window_size ,ROI["banpick_status_text"])   #밴픽 상태메시지 캡처
+        status_img = crop_roi_relative_xy(img, window_size ,ROI.BANPICK_STATUS_TEXT)   #밴픽 상태메시지 캡처
 
         if DEBUG_SAVE:
             img.save(PATHS.LOL_CLIENT_CAPTURE_PNG)
             status_img.save(PATHS.BANPICK_STATUS_TEXT_CAPTURE_PNG)
 
-        my_banned_img = crop_roi_relative_xy(img, window_size, ROI["banned_champions_area_my_team"])
-        enemy_banned_img = crop_roi_relative_xy(img, window_size, ROI["banned_champions_area_enemy_team"])
-        my_picked_img = crop_roi_relative_xy(img, window_size, ROI["picked_champions_area_my_team"])
-        enemy_picked_img = crop_roi_relative_xy(img, window_size, ROI["picked_champions_area_enemy_team"])
+        my_banned_img = crop_roi_relative_xy(img, window_size, ROI.BANNED_CHAMPIONS_MY_TEAM)
+        enemy_banned_img = crop_roi_relative_xy(img, window_size, ROI.BANNED_CHAMPIONS_ENEMY_TEAM)
+        my_picked_img = crop_roi_relative_xy(img, window_size, ROI.PICKED_CHAMPIONS_MY_TEAM)
+        enemy_picked_img = crop_roi_relative_xy(img, window_size, ROI.PICKED_CHAMPIONS_ENEMY_TEAM)
         total_banned_img = merge_images_horizontal(my_banned_img, enemy_banned_img)
         total_picked_img = merge_images_horizontal(my_picked_img, enemy_picked_img)
 
