@@ -143,6 +143,7 @@ def build_draft_recommend_prompt(
 - 내 고정 포지션: {my_role}
 - 내 티어(한국 서버 기준): {my_tier}
 - 내 챔프폭(가능하면 여기서 우선 추천): {pool_json}
+- 연습하고 있는 챔피언: ["Akali", "Sion", "Tryndamere", "Ornn"]
 
 [현재 밴픽 상황]
 - 우리팀 픽(포지션 고정): {my_team_json}
@@ -150,11 +151,13 @@ def build_draft_recommend_prompt(
 - 밴된 챔피언 10개(왼→오, 팀 구분 없음): {bans_json}
 
 [요구사항]
-1) **추천은 내 포지션({my_role})의 챔피언**만 해줘.
-2) 가능한 한 **내 챔프폭**에서 추천해줘. (없거나 밴/픽으로 불가능하면 챔프폭 밖도 가능)
-3) **밴 추천은 절대 하지 마.**
-4) 설명(reason, notes)은 **반드시 한글**로 작성해.
-5) 챔피언 이름은 데이터 처리 편의를 위해 **공식 영문명**으로 출력해.
+1) 추천은 **내 챔프폭**에서 우선적으로 해주되, 상대 라이너와의 상성이나 전체적인 조합을 고려하여 
+**연습하고 있는 챔피언** 풀에 있는 챔피언이 더 좋다면 그것을 해줘. (밴/픽으로 불가능하면 챔프폭 밖도 가능)
+2) 가능하면 유력한 상대 라이너와의 라인전 상성을 우선 고려해주고, 
+내가 미드 라이너라면 두번째로 우리팀과 상대팀 미드정글 조합을 고려, 세번째로 전체 조합을 고려
+4) **밴 추천은 절대 하지 마.**
+5) 설명(reason, notes)은 **반드시 한글**로 작성해.
+6) 챔피언 이름은 데이터 처리 편의를 위해 **공식 영문명**으로 출력해.
 
 반환은 JSON만. 마크다운 금지. 추가 텍스트 금지.
 
@@ -181,3 +184,23 @@ def build_draft_recommend_prompt(
   "notes_kr": string
 }}
 """.strip()
+
+
+def build_draft_recommend_prompt_lite(
+    *,
+    my_role: str,
+    my_tier: str,
+    my_champ_pool: list[str],
+    my_team: dict,
+    enemy_picks: list,
+    bans_10: list,
+) -> str:
+    return (
+        "KR LoL draft. ONLY JSON.\n"
+        f"role={my_role} tier={my_tier}\n"
+        f"pool={json.dumps(my_champ_pool, ensure_ascii=False)} practice=[Akali,Sion,Tryndamere,Ornn]\n"
+        f"our={json.dumps(my_team, ensure_ascii=False)} enemy={json.dumps(enemy_picks, ensure_ascii=False)} bans={json.dumps(bans_10, ensure_ascii=False)}\n"
+        "Pick for my role. Prefer pool, else practice, else any available.\n"
+        "No ban advice. champion must be official English. reason_kr Korean <= 80 chars.\n"
+        'Return: {"my_role":str,"reco":[{"c":str,"r":str},{"c":str,"r":str},{"c":str,"r":str}]}'
+    )

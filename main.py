@@ -11,7 +11,7 @@ from pipeline.pick_stage_detector import detect_pick_kind_from_banned_strips
 from core.ocr_engine import extract_text
 from core.gemini_vision import analyze_image_json
 from config.prompts import PICKED_CHAMPS_WITH_ROLES_PROMPT, BANNED_CHAMPS_10_PROMPT
-from config.prompts import build_draft_recommend_prompt
+from config.prompts import build_draft_recommend_prompt, build_draft_recommend_prompt_lite
 from core.draft_schema import normalize_picks_with_roles
 from core.draft_schema import normalize_bans10
 from core.gemini_text import generate_text_json
@@ -98,18 +98,18 @@ while True:
                 print(picked.enemy_team)  # [..5..]     
 
                 # 제미나이 api에 밴 정보 보내기
-                raw_bans = analyze_image_json(total_banned_img, prompt=BANNED_CHAMPS_10_PROMPT, model=MODEL_VISION)
-                bans10 = normalize_bans10(raw_bans)
-                print(bans10.bans)
+                #raw_bans = analyze_image_json(total_banned_img, prompt=BANNED_CHAMPS_10_PROMPT, model=MODEL_VISION)
+                #bans10 = normalize_bans10(raw_bans)
+                #print(bans10.bans)
 
                 # 제미나이 api에 밴픽 추천
-                prompt = build_draft_recommend_prompt(
+                prompt = build_draft_recommend_prompt_lite(
                     my_role=MY_ROLE,
                     my_tier=MY_TIER,
                     my_champ_pool=MY_CHAMP_POOL,
                     my_team=picked.my_team,
                     enemy_picks=picked.enemy_team,
-                    bans_10=bans10.bans,
+                    bans_10=[],
                 )
 
                 rec = generate_text_json(prompt, model=MODEL_TEXT)
