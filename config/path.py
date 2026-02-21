@@ -18,5 +18,6 @@ class Paths:
 
     TEST_BANNED_SLOTS_DIR: Path = TEST_IMAGES_DIR / "banned_slots"
     TEST_PICKED_CHAMPS_DIR: Path = TEST_IMAGES_DIR / "picked_champs"
+    TEST_PICKED_CHAMPS_TEXT_ONLY_DIR: Path = TEST_IMAGES_DIR / "picked_champs_text_only"
 
 PATHS = Paths()
