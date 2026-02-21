@@ -10,13 +10,13 @@ from pipeline.state_manager import StableStateManager
 from pipeline.pick_stage_detector import detect_pick_kind_from_banned_strips
 from core.ocr_engine import extract_text
 from core.gemini_vision import analyze_image_json
-from config.prompts import PICKED_CHAMPS_WITH_ROLES_PROMPT, BANNED_CHAMPS_10_PROMPT
+from config.prompts import PICKED_CHAMPS_WITH_ROLES_PROMPT, BANNED_CHAMPS_10_PROMPT, DRAFT_FROM_IMAGE_PROMPT_LITE
 from config.prompts import build_draft_recommend_prompt, build_draft_recommend_prompt_lite
-from core.draft_schema import normalize_picks_with_roles
-from core.draft_schema import normalize_bans10
+from core.draft_schema import normalize_picks_with_roles, normalize_bans10, safe_get_draft_fields
 from core.gemini_text import generate_text_json
 from PIL import Image
 import time
+import json
 
 tracker = WindowTracker("League of Legends")
 normalizer = TextNormalizer()
@@ -27,10 +27,10 @@ state_manager = StableStateManager(
     min_confidence=0.7
 )
 
-SLEEP_SEC = 0.3
-STD_THRESHOLD = 25.0
-MODEL_VISION = "gemini-2.5-flash"
-MODEL_TEXT = "gemini-2.5-flash"
+SLEEP_SEC = 0.1
+STD_THRESHOLD = 30.0
+MODEL_VISION = "gemini-3-flash-preview"
+MODEL_TEXT = "gemini-3-flash-preview"
 
 MY_ROLE = "MID"   # TOP/JUNGLE/MID/ADC/SUPPORT 중 하나로 고정
 MY_TIER = "BRONZE"     # UNRANKED/IRON/BRONZE/SILVER/GOLD/PLATINUM/EMERALD/DIAMOND/MASTER/GRANDMASTER/CHALLENGER
@@ -92,28 +92,33 @@ while True:
             if pick_res.kind == "PICK_REAL":
                 # 진짜 픽 단계 로직 실행
                 # 제미나이 api에 픽 정보 보내기
-                raw_picks = analyze_image_json(total_picked_img, prompt=PICKED_CHAMPS_WITH_ROLES_PROMPT, model=MODEL_VISION)
-                picked = normalize_picks_with_roles(raw_picks)
-                print(picked.my_team)     # {"top": "...", "jungle": "...", ...}
-                print(picked.enemy_team)  # [..5..]     
-
-                # 제미나이 api에 밴 정보 보내기
-                #raw_bans = analyze_image_json(total_banned_img, prompt=BANNED_CHAMPS_10_PROMPT, model=MODEL_VISION)
-                #bans10 = normalize_bans10(raw_bans)
-                #print(bans10.bans)
-
-                # 제미나이 api에 밴픽 추천
-                prompt = build_draft_recommend_prompt_lite(
+                prompt = DRAFT_FROM_IMAGE_PROMPT_LITE.format(
                     my_role=MY_ROLE,
                     my_tier=MY_TIER,
-                    my_champ_pool=MY_CHAMP_POOL,
-                    my_team=picked.my_team,
-                    enemy_picks=picked.enemy_team,
-                    bans_10=[],
+                    pool_json=json.dumps(MY_CHAMP_POOL, ensure_ascii=False),
                 )
+                res = analyze_image_json(total_picked_img, prompt=prompt, model=MODEL_VISION)
 
-                rec = generate_text_json(prompt, model=MODEL_TEXT)
-                print("📌 추천:", rec)
+                my_team, enemy_team, reco, err = safe_get_draft_fields(res)
+                if err:
+                    print(" ❌ 실패:", p.name, "|", err.get("_error"))
+                    if err.get("_error") == "missing_keys":
+                        print("   실제키:", err.get("_keys"))
+                        try:
+                            print("   원문(앞부분):", json.dumps(err.get("_raw"), ensure_ascii=False)[:500])
+                        except Exception:
+                            print("   원문:", err.get("_raw"))
+                    elif err.get("_error") == "json_parse_failed":
+                        raw = err.get("_raw", "")
+                        print("   raw(앞부분):", raw[:300] if isinstance(raw, str) else raw)
+                    else:
+                        print("   raw:", err.get("_raw"))
+                    continue
+
+                print(" ✅ my_team:", my_team)
+                print(" ✅ enemy_team:", enemy_team)
+                print(" ✅ reco:", reco)
+
                 break
 
         if stable_state == "PREPARE":

@@ -120,6 +120,27 @@ Output JSON schema:
 }
 """.strip()
 
+DRAFT_FROM_IMAGE_PROMPT_LITE = """
+LoL KR draft from image. Output ONLY JSON.
+
+Step1: Read picks from image:
+- my_team roles fixed: top,jungle,mid,adc,support (use null if empty)
+- enemy_team: up to 5 champs list (null if empty)
+
+Step2: Recommend my next pick for role={my_role}, tier={my_tier}
+- prefer pool: {pool_json}
+- practice allowed: ["Akali","Sion","Tryndamere","Ornn"]
+- no ban advice
+- champion must be official English
+- reason_kr Korean <= 80 chars
+
+Return JSON:
+{{
+  "my_team": {{"top":null,"jungle":null,"mid":null,"adc":null,"support":null}},
+  "enemy_team": [null,null,null,null,null],
+  "reco": [{{"c":"","r":""}},{{"c":"","r":""}},{{"c":"","r":""}}]
+}}
+""".strip()
 
 def build_draft_recommend_prompt(
     *,

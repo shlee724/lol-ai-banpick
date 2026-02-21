@@ -73,3 +73,29 @@ def normalize_bans10(data: Dict[str, Any]) -> Bans10:
         norm.append(None)
 
     return Bans10(bans=norm, notes=notes)
+
+def safe_get_draft_fields(res):
+    """
+    main.py와 동일한 기대 스키마:
+      {
+        "my_team": {...},
+        "enemy_team": {...},
+        "reco": {...}
+      }
+    """
+    if isinstance(res, str):
+        try:
+            res = json.loads(res)
+        except Exception:
+            return None, None, None, {"_error": "json_parse_failed", "_raw": res}
+
+    if not isinstance(res, dict):
+        return None, None, None, {"_error": "not_a_dict", "_raw": res}
+
+    my_team = res.get("my_team")
+    enemy_team = res.get("enemy_team")
+    reco = res.get("reco")
+    if my_team is None or enemy_team is None or reco is None:
+        return None, None, None, {"_error": "missing_keys", "_keys": list(res.keys()), "_raw": res}
+
+    return my_team, enemy_team, reco, None
