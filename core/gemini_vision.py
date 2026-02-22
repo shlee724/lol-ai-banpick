@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 from PIL import Image
-
+from typing import Iterator
 
 @dataclass
 class GeminiVisionResult:
@@ -109,3 +109,33 @@ def analyze_image_json(
             f"--- cleaned ---\n{cleaned}\n"
             f"--- raw text ---\n{res.text}"
         )
+
+def analyze_image_stream(
+    img: Image.Image,
+    *,
+    prompt: str,
+    model: str = "gemini-2.0-flash",
+    mime_type: str = "image/png",
+    config: Optional[types.GenerateContentConfig] = None,
+) -> Iterator[str]:
+    """
+    Gemini 스트리밍 호출.
+    yield 되는 문자열은 '추가로 생성된 텍스트 조각'이다.
+    """
+    client = get_client()
+    img_bytes = _pil_to_png_bytes(img)
+
+    stream = client.models.generate_content_stream(
+        model=model,
+        contents=[
+            prompt,
+            types.Part.from_bytes(data=img_bytes, mime_type=mime_type),
+        ],
+        config=config,
+    )
+
+    for chunk in stream:
+        # chunk.text가 None인 경우가 있을 수 있어 방어
+        t = (chunk.text or "")
+        if t:
+            yield t

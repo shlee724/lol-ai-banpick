@@ -9,7 +9,7 @@ from config.path import PATHS
 
 from core.roi_manager import crop_roi_relative_xy
 from core.ocr_engine import extract_text
-from core.gemini_vision import analyze_image_json
+from core.gemini_vision import analyze_image_json, analyze_image_stream
 from core.draft_schema import safe_get_draft_fields
 
 from pipeline.normalizer import TextNormalizer
@@ -159,12 +159,21 @@ def main():
             )
 
             try:
-                t0 = time.perf_counter()  # 시작 시간 (고해상도 타이머)
-                res = analyze_image_json(total_picked_img, prompt=prompt, model=MODEL_VISION)
-                t1 = time.perf_counter()  # 종료 시간
+                buf = []
+                t0 = time.perf_counter()
+                first_token_t = None
 
-                elapsed = t1 - t0
-                print(f" ⏱ Gemini 호출 시간: {elapsed:.3f} sec")
+                for delta in analyze_image_stream(total_picked_img, prompt=prompt, model=MODEL_VISION):
+                    if first_token_t is None:
+                        first_token_t = time.perf_counter()
+                        print(f"\n⏱ 첫 토큰: {first_token_t - t0:.2f}s\n")
+
+                    print(delta, end="", flush=True)
+                    buf.append(delta)
+
+                t1 = time.perf_counter()
+                print(f"\n\n⏱ 전체: {t1 - t0:.2f}s")
+                final_text = "".join(buf)
 
             except Exception as e:
                 print(" ❌ Gemini 호출 실패:", repr(e))
@@ -173,25 +182,6 @@ def main():
             gemini_calls += 1
             last_gemini_call_t = now
 
-            my_team, enemy_team, reco, err = safe_get_draft_fields(res)
-            if err:
-                print(" ❌ 실패:", p.name, "|", err.get("_error"))
-                if err.get("_error") == "missing_keys":
-                    print("   실제키:", err.get("_keys"))
-                    try:
-                        print("   원문(앞부분):", json.dumps(err.get("_raw"), ensure_ascii=False)[:500])
-                    except Exception:
-                        print("   원문:", err.get("_raw"))
-                elif err.get("_error") == "json_parse_failed":
-                    raw = err.get("_raw", "")
-                    print("   raw(앞부분):", raw[:300] if isinstance(raw, str) else raw)
-                else:
-                    print("   raw:", err.get("_raw"))
-                continue
-
-            print(" ✅ my_team:", my_team)
-            print(" ✅ enemy_team:", enemy_team)
-            print(" ✅ reco:", reco)
             break
 
         if stable_state == "PREPARE":
