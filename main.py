@@ -14,7 +14,7 @@ from config.prompts import PICKED_CHAMPS_WITH_ROLES_PROMPT, BANNED_CHAMPS_10_PRO
 from config.prompts import build_draft_recommend_prompt, build_draft_recommend_prompt_lite
 from core.draft_schema import normalize_picks_with_roles, normalize_bans10, safe_get_draft_fields
 from core.gemini_text import generate_text_json
-from core.lol_pick_coach import lol_mid_pick_coach_stream
+from core.lol_pick_coach import lol_mid_pick_coach_stream, get_client
 from PIL import Image
 import time
 import json
@@ -27,6 +27,7 @@ state_manager = StableStateManager(
     min_duration=1.0,
     min_confidence=0.7
 )
+coach_client = get_client()
 
 SLEEP_SEC = 0.01
 STD_THRESHOLD = 30.0
@@ -98,7 +99,7 @@ while True:
                     t0 = time.perf_counter()
                     first_token_t = None
 
-                    for delta in lol_mid_pick_coach_stream(total_picked_img, model="gemini-2.5-pro"):
+                    for delta in lol_mid_pick_coach_stream(total_picked_img, client=coach_client, model="gemini-2.5-pro"):
                         if first_token_t is None:
                             first_token_t = time.perf_counter()
                             print(f"\n⏱ 첫 토큰: {first_token_t - t0:.2f}s\n")

@@ -43,6 +43,9 @@ _PROMPT_LOL_MID_COACH = """너는 LoL 밴픽 코치다. 첨부된 이미지는 "
 # =========================
 _client_singleton: Optional[genai.Client] = None
 
+def get_client(api_key_env: str = "GEMINI_API_KEY") -> genai.Client:
+    """외부에서 미리 client를 준비(워밍업)할 수 있게 공개 함수로 제공."""
+    return _get_client(api_key_env=api_key_env)
 
 def _get_client(api_key_env: str = "GEMINI_API_KEY") -> genai.Client:
     global _client_singleton
@@ -108,6 +111,7 @@ def _to_image_bytes(inp: InputImage, *, mime_type: str) -> bytes:
 def lol_mid_pick_coach_stream(
     total_picked_img: InputImage,
     *,
+    client: Optional[genai.Client] = None,
     model: str = "gemini-2.5-pro",
     mime_type: str = "image/png",
     temperature: float = 0.2,
@@ -121,7 +125,9 @@ def lol_mid_pick_coach_stream(
     - 프롬프트는 함수 내부에 '내장'되어 있음(나중에 분리 가능)
     - 입력은 PIL Image / bytes / 파일경로(str|Path) 지원
     """
-    client = _get_client(api_key_env=api_key_env)
+    # ✅ client 주입되면 그걸 사용, 없으면 기존처럼 싱글턴 생성
+    if client is None:
+        client = _get_client(api_key_env=api_key_env)
     img_bytes = _to_image_bytes(total_picked_img, mime_type=mime_type)
 
     # 원본 코드와 동일하게 정식 Content/Part 구성 :contentReference[oaicite:2]{index=2}

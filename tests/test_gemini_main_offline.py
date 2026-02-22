@@ -11,7 +11,7 @@ from core.roi_manager import crop_roi_relative_xy
 from core.ocr_engine import extract_text
 from core.gemini_vision import analyze_image_json, analyze_image_stream
 from core.draft_schema import safe_get_draft_fields
-from core.lol_pick_coach import lol_mid_pick_coach_stream
+from core.lol_pick_coach import lol_mid_pick_coach_stream, get_client
 
 from pipeline.normalizer import TextNormalizer
 from pipeline.classifier import StateClassifier
@@ -88,6 +88,7 @@ def main():
     state_manager = StableStateManager(min_duration=1.0, min_confidence=0.7)
 
     stable_state = "UNKNOWN"
+    coach_client = get_client()
     last_gemini_call_t = 0.0
     gemini_calls = 0
 
@@ -153,18 +154,13 @@ def main():
                 print(" (Gemini max calls reached)")
                 break
 
-            prompt = DRAFT_FROM_IMAGE_PROMPT_LITE.format(
-                my_role=MY_ROLE,
-                my_tier=MY_TIER,
-                pool_json=json.dumps(MY_CHAMP_POOL, ensure_ascii=False),
-            )
 
             try:
                 buf = []
                 t0 = time.perf_counter()
                 first_token_t = None
 
-                for delta in lol_mid_pick_coach_stream(total_picked_img, model="gemini-2.5-pro"):
+                for delta in lol_mid_pick_coach_stream(total_picked_img, client = coach_client, model="gemini-2.5-pro"):
                     if first_token_t is None:
                         first_token_t = time.perf_counter()
                         print(f"\n⏱ 첫 토큰: {first_token_t - t0:.2f}s\n")
