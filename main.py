@@ -14,6 +14,7 @@ from config.prompts import PICKED_CHAMPS_WITH_ROLES_PROMPT, BANNED_CHAMPS_10_PRO
 from config.prompts import build_draft_recommend_prompt, build_draft_recommend_prompt_lite
 from core.draft_schema import normalize_picks_with_roles, normalize_bans10, safe_get_draft_fields
 from core.gemini_text import generate_text_json
+from core.lol_pick_coach import lol_mid_pick_coach_stream
 from PIL import Image
 import time
 import json
@@ -27,7 +28,7 @@ state_manager = StableStateManager(
     min_confidence=0.7
 )
 
-SLEEP_SEC = 0.1
+SLEEP_SEC = 0.01
 STD_THRESHOLD = 30.0
 MODEL_VISION = "gemini-3-flash-preview"
 MODEL_TEXT = "gemini-3-flash-preview"
@@ -92,32 +93,26 @@ while True:
             if pick_res.kind == "PICK_REAL":
                 # 진짜 픽 단계 로직 실행
                 # 제미나이 api에 픽 정보 보내기
-                prompt = DRAFT_FROM_IMAGE_PROMPT_LITE.format(
-                    my_role=MY_ROLE,
-                    my_tier=MY_TIER,
-                    pool_json=json.dumps(MY_CHAMP_POOL, ensure_ascii=False),
-                )
-                res = analyze_image_json(total_picked_img, prompt=prompt, model=MODEL_VISION)
+                try:
+                    buf = []
+                    t0 = time.perf_counter()
+                    first_token_t = None
 
-                my_team, enemy_team, reco, err = safe_get_draft_fields(res)
-                if err:
-                    print(" ❌ 실패:", p.name, "|", err.get("_error"))
-                    if err.get("_error") == "missing_keys":
-                        print("   실제키:", err.get("_keys"))
-                        try:
-                            print("   원문(앞부분):", json.dumps(err.get("_raw"), ensure_ascii=False)[:500])
-                        except Exception:
-                            print("   원문:", err.get("_raw"))
-                    elif err.get("_error") == "json_parse_failed":
-                        raw = err.get("_raw", "")
-                        print("   raw(앞부분):", raw[:300] if isinstance(raw, str) else raw)
-                    else:
-                        print("   raw:", err.get("_raw"))
-                    continue
+                    for delta in lol_mid_pick_coach_stream(total_picked_img, model="gemini-2.5-pro"):
+                        if first_token_t is None:
+                            first_token_t = time.perf_counter()
+                            print(f"\n⏱ 첫 토큰: {first_token_t - t0:.2f}s\n")
 
-                print(" ✅ my_team:", my_team)
-                print(" ✅ enemy_team:", enemy_team)
-                print(" ✅ reco:", reco)
+                        print(delta, end="", flush=True)
+                        buf.append(delta)
+
+                    t1 = time.perf_counter()
+                    print(f"\n\n⏱ 전체: {t1 - t0:.2f}s")
+                    final_text = "".join(buf)
+
+                except Exception as e:
+                    print(" ❌ Gemini 호출 실패:", repr(e))
+                    continue                
 
                 break
 
