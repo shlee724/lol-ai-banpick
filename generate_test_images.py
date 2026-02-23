@@ -16,6 +16,7 @@ while True:
 
     elif rect and tracker.hwnd:
         x, y, w, h = rect
+        widnow_size = (w, h)
         print(f"창 위치: ({x},{y}) 크기: {w}x{h}")
 
         # 전체 화면 캡처
@@ -25,7 +26,7 @@ while True:
         img.save(lol_path)
 
         # ROI 캡처
-        roi_img = crop_roi_relative_xy(img, rect, ROI.BANPICK_STATUS_TEXT)
+        roi_img = crop_roi_relative_xy(img, widnow_size, ROI.BANPICK_STATUS_TEXT)
 
         banpick_path = PATHS.TEST_BANPICK_STATUS_DIR / f"banpick_status_{timestamp}.png"
         roi_img.save(banpick_path)
