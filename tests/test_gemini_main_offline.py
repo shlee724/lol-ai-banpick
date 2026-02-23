@@ -73,11 +73,46 @@ def merge_images_vertical(
 
     return new_img
 
+def crop_picked_champs_texts_area(img: Image.Image, window_size: tuple[int, int]):
+    my_picked_1 = crop_roi_relative_xy(img, window_size, ROI.MY_TEAM_PICK1)
+    my_picked_2 = crop_roi_relative_xy(img, window_size, ROI.MY_TEAM_PICK2)
+    my_picked_3 = crop_roi_relative_xy(img, window_size, ROI.MY_TEAM_PICK3)
+    my_picked_4 = crop_roi_relative_xy(img, window_size, ROI.MY_TEAM_PICK4)
+    my_picked_5 = crop_roi_relative_xy(img, window_size, ROI.MY_TEAM_PICK5)
+    enemy_picked_1 = crop_roi_relative_xy(img, window_size, ROI.ENEMY_TEAM_PICK1)
+    enemy_picked_2 = crop_roi_relative_xy(img, window_size, ROI.ENEMY_TEAM_PICK2)
+    enemy_picked_3 = crop_roi_relative_xy(img, window_size, ROI.ENEMY_TEAM_PICK3)
+    enemy_picked_4 = crop_roi_relative_xy(img, window_size, ROI.ENEMY_TEAM_PICK4)
+    enemy_picked_5 = crop_roi_relative_xy(img, window_size, ROI.ENEMY_TEAM_PICK5)
+    my_pos_1 = crop_roi_relative_xy(img, window_size, ROI.MY_TEAM_POS1)
+    my_pos_2 = crop_roi_relative_xy(img, window_size, ROI.MY_TEAM_POS2)
+    my_pos_3 = crop_roi_relative_xy(img, window_size, ROI.MY_TEAM_POS3)
+    my_pos_4 = crop_roi_relative_xy(img, window_size, ROI.MY_TEAM_POS4)
+    my_pos_5 = crop_roi_relative_xy(img, window_size, ROI.MY_TEAM_POS5)
+
+    my_list = [my_pos_1,my_picked_1, my_pos_2,my_picked_2, my_pos_3,my_picked_3, my_pos_4,my_picked_4, my_pos_5,my_picked_5]
+    enemy_list = [enemy_picked_1, enemy_picked_2, enemy_picked_3, enemy_picked_4, enemy_picked_5]
+
+    my_picked_merge = merge_images_vertical(images=my_list)
+    enemy_picked_merge = merge_images_vertical(images=enemy_list)
+    total_picked_img = merge_images_horizontal(my_picked_merge, enemy_picked_merge)    
+
+    return total_picked_img
+
+def crop_picked_champs_texts_and_portraits_area(img: Image.Image, window_size: tuple[int, int]):
+    my_picked_img = crop_roi_relative_xy(img, window_size, ROI.PICKED_CHAMPIONS_MY_TEAM)
+    enemy_picked_img = crop_roi_relative_xy(img, window_size, ROI.PICKED_CHAMPIONS_ENEMY_TEAM)
+    total_picked_img = merge_images_horizontal(my_picked_img, enemy_picked_img)    
+
+    return total_picked_img
+
 # ======================
 # 메인 테스트 루프
 # ======================
 def main():
-    img_dir = PATHS.TEST_LOL_CLIENT_DIR
+    test_case = "test_4"
+    img_dir = PATHS.TEST_LOL_CLIENT_DIR / test_case
+    print(img_dir)
     paths = sorted(img_dir.glob("*.png"))
     if not paths:
         raise FileNotFoundError(f"테스트 이미지가 없음: {img_dir}")
@@ -101,29 +136,9 @@ def main():
         my_banned_img = crop_roi_relative_xy(img, window_size, ROI.BANNED_CHAMPIONS_MY_TEAM)
         enemy_banned_img = crop_roi_relative_xy(img, window_size, ROI.BANNED_CHAMPIONS_ENEMY_TEAM)
 
-        my_picked_1 = crop_roi_relative_xy(img, window_size, ROI.MY_TEAM_PICK1)
-        my_picked_2 = crop_roi_relative_xy(img, window_size, ROI.MY_TEAM_PICK2)
-        my_picked_3 = crop_roi_relative_xy(img, window_size, ROI.MY_TEAM_PICK3)
-        my_picked_4 = crop_roi_relative_xy(img, window_size, ROI.MY_TEAM_PICK4)
-        my_picked_5 = crop_roi_relative_xy(img, window_size, ROI.MY_TEAM_PICK5)
-        enemy_picked_1 = crop_roi_relative_xy(img, window_size, ROI.ENEMY_TEAM_PICK1)
-        enemy_picked_2 = crop_roi_relative_xy(img, window_size, ROI.ENEMY_TEAM_PICK2)
-        enemy_picked_3 = crop_roi_relative_xy(img, window_size, ROI.ENEMY_TEAM_PICK3)
-        enemy_picked_4 = crop_roi_relative_xy(img, window_size, ROI.ENEMY_TEAM_PICK4)
-        enemy_picked_5 = crop_roi_relative_xy(img, window_size, ROI.ENEMY_TEAM_PICK5)
-        my_pos_1 = crop_roi_relative_xy(img, window_size, ROI.MY_TEAM_POS1)
-        my_pos_2 = crop_roi_relative_xy(img, window_size, ROI.MY_TEAM_POS2)
-        my_pos_3 = crop_roi_relative_xy(img, window_size, ROI.MY_TEAM_POS3)
-        my_pos_4 = crop_roi_relative_xy(img, window_size, ROI.MY_TEAM_POS4)
-        my_pos_5 = crop_roi_relative_xy(img, window_size, ROI.MY_TEAM_POS5)
+        total_picked_texts_img = crop_picked_champs_texts_area(img = img, window_size= window_size)
+        total_picked_texts_and_portrait_img = crop_picked_champs_texts_and_portraits_area(img = img, window_size= window_size)
 
-        my_list = [my_pos_1,my_picked_1, my_pos_2,my_picked_2, my_pos_3,my_picked_3, my_pos_4,my_picked_4, my_pos_5,my_picked_5]
-        enemy_list = [enemy_picked_1, enemy_picked_2, enemy_picked_3, enemy_picked_4, enemy_picked_5]
-
-        my_picked_merge = merge_images_vertical(images=my_list)
-        enemy_picked_merge = merge_images_vertical(images=enemy_list)
-
-        total_picked_img = merge_images_horizontal(my_picked_merge, enemy_picked_merge)
         # OCR → 상태 분류
         ocr = extract_text(status_img)
         norm = normalizer.normalize(ocr)
@@ -160,7 +175,23 @@ def main():
                 t0 = time.perf_counter()
                 first_token_t = None
 
-                for delta in lol_mid_pick_coach_stream(total_picked_img, client = coach_client, model="gemini-2.5-pro"):
+                for delta in lol_mid_pick_coach_stream(total_picked_texts_img, client = coach_client, model="gemini-2.5-pro"):
+                    if first_token_t is None:
+                        first_token_t = time.perf_counter()
+                        print(f"\n⏱ 첫 토큰: {first_token_t - t0:.2f}s\n")
+
+                    print(delta, end="", flush=True)
+                    buf.append(delta)
+
+                t1 = time.perf_counter()
+                print(f"\n\n⏱ 전체: {t1 - t0:.2f}s")
+                final_text = "".join(buf)
+
+                buf = []
+                t0 = time.perf_counter()
+                first_token_t = None
+
+                for delta in lol_mid_pick_coach_stream(total_picked_texts_and_portrait_img, client = coach_client, model="gemini-2.5-pro"):
                     if first_token_t is None:
                         first_token_t = time.perf_counter()
                         print(f"\n⏱ 첫 토큰: {first_token_t - t0:.2f}s\n")
