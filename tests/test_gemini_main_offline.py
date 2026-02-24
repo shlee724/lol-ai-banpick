@@ -19,6 +19,7 @@ from pipeline.buffer import StateBuffer
 from pipeline.state_manager import StableStateManager
 from pipeline.pick_stage_detector import detect_pick_kind_from_banned_strips
 from pipeline.prepare_phase_detector import is_dual_timer_effective
+from core.lol_playplan_coach import lol_playplan_stream, get_playplan_coach_client
 
 
 from config.prompts import DRAFT_FROM_IMAGE_PROMPT_LITE
@@ -111,7 +112,7 @@ def crop_picked_champs_texts_and_portraits_area(img: Image.Image, window_size: t
 # 메인 테스트 루프
 # ======================
 def main():
-    test_case = "test_3"
+    test_case = "test_6"
     img_dir = PATHS.TEST_LOL_CLIENT_DIR / test_case
     print(img_dir)
     paths = sorted(img_dir.glob("*.png"))
@@ -124,7 +125,8 @@ def main():
     state_manager = StableStateManager(min_duration=1.0, min_confidence=0.7)
 
     stable_state = "UNKNOWN"
-    coach_client = get_client()
+    pick_coach_client = get_client()
+    playplan_coach_client = get_playplan_coach_client()
     last_gemini_call_t = 0.0
     gemini_calls = 0
 
@@ -182,7 +184,7 @@ def main():
                 t0 = time.perf_counter()
                 first_token_t = None
 
-                for delta in lol_mid_pick_coach_stream(total_picked_texts_img, client = coach_client, model="gemini-2.5-pro"):
+                for delta in lol_mid_pick_coach_stream(total_picked_texts_img, client = pick_coach_client, model="gemini-2.5-pro"):
                     if first_token_t is None:
                         first_token_t = time.perf_counter()
                         print(f"\n⏱ 첫 토큰: {first_token_t - t0:.2f}s\n")
@@ -198,7 +200,7 @@ def main():
                 t0 = time.perf_counter()
                 first_token_t = None
 
-                for delta in lol_mid_pick_coach_stream(total_picked_texts_and_portrait_img, client = coach_client, model="gemini-2.5-pro"):
+                for delta in lol_mid_pick_coach_stream(total_picked_texts_and_portrait_img, client = pick_coach_client, model="gemini-2.5-pro"):
                     if first_token_t is None:
                         first_token_t = time.perf_counter()
                         print(f"\n⏱ 첫 토큰: {first_token_t - t0:.2f}s\n")
@@ -234,6 +236,27 @@ def main():
             # ✅ 확정 조건: 다수결 True + 신뢰도 임계(선택)
             if dual_stable is True and dual_conf >= 0.72:
                 print("양팀 모든 챔피언 픽 됐습니다 (stable)")
+                
+                buf = []
+                t0 = time.perf_counter()
+                first_token_t = None
+
+                for delta in lol_playplan_stream(
+                    total_picked_texts_img,
+                    client=playplan_coach_client,
+                    model="gemini-2.5-pro",
+                ):
+                    if first_token_t is None:
+                        first_token_t = time.perf_counter()
+                        print(f"\n⏱ 첫 토큰: {first_token_t - t0:.2f}s\n")
+
+                    print(delta, end="", flush=True)
+                    buf.append(delta)
+
+                t1 = time.perf_counter()
+                print(f"\n\n⏱ 전체: {t1 - t0:.2f}s")
+
+                final_text = "".join(buf)
                 break
         else:
             dual_buf = StateBuffer(size=7)            
