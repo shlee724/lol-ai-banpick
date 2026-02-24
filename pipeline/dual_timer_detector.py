@@ -1,106 +1,146 @@
-# dual_timer_detector_cropped.py
+# dual_timer_detector.py (대칭성 기반 버전)
+# - ROI가 "거의 바만" 크롭된(높이 몇 픽셀 수준) 이미지에 최적화
+# - 좌/우를 각각 'bar 검출'해서 AND 하는 대신,
+#   가운데를 버린 뒤 좌측과 (우측 flip)의 1D 밝기 프로파일이 얼마나 비슷한지로 판정
+
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Tuple
+
 import numpy as np
 from PIL import Image
+import cv2
 
 
-@dataclass
-class DetectorConfig:
-    # 좌/우 분할 비율 (중앙 경계에 UI가 걸칠 수 있어 약간의 안전 마진)
-    split_left_end: float = 0.425
-    split_right_start: float = 0.575
+# ======================
+# Config
+# ======================
+@dataclass(frozen=True)
+class SymmetryConfig:
+    # 중앙 UI(숫자/세로선 등) 영향 제거를 위해 가운데를 버림
+    # 예: 0.18이면 중앙 18% 구간을 버림
+    center_ignore_ratio: float = 0.148
 
-    # 바는 가로로 긴 연속 구간이어야 함
-    min_run_ratio: float = 0.35  # 반쪽 너비 대비 22% 이상 연속 True면 바
-
-    # 적응형 임계값(분위수) + 클램프
-    sat_quantile: float = 0.90
-    sat_floor: int = 35
-    sat_ceiling: int = 170
-
-    val_quantile: float = 0.82
-    val_floor: int = 65
-    val_ceiling: int = 210
-
-    # 행에서 True 비율이 이 이상이면 "막대가 지나가는 행" 후보
-    row_hit_ratio: float = 0.18
-
-    # 노이즈 억제용 스무딩
+    # 1D 프로파일 스무딩(노이즈 억제)
     smooth_window: int = 9
 
+    # 대칭 판정 임계값
+    # (경험적으로 dual은 높고, single은 낮아짐)
+    ncc_threshold: float = 0.70     # 정규화 상관계수(클수록 대칭)
+    l1_threshold: float = 0.85      # 정규화 후 평균 절대오차(작을수록 대칭)
 
-def _to_hsv_np(img: Image.Image) -> np.ndarray:
-    if img.mode != "RGB":
-        img = img.convert("RGB")
-    return np.asarray(img.convert("HSV"), dtype=np.uint8)
-
-
-def _long_run_exists(row_bool: np.ndarray, min_run: int) -> bool:
-    run = 0
-    for v in row_bool:
-        if v:
-            run += 1
-            if run >= min_run:
-                return True
-        else:
-            run = 0
-    return False
+    # 너무 “평평한” 이미지(변화 거의 없음)면 대칭성 점수가 의미 없어질 수 있어 안전장치
+    min_profile_std: float = 2.0
 
 
-def _detect_bar(hsv: np.ndarray, cfg: DetectorConfig) -> bool:
-    s = hsv[:, :, 1].astype(np.int16)
-    v = hsv[:, :, 2].astype(np.int16)
-
-    s_thr = int(np.quantile(s, cfg.sat_quantile))
-    s_thr = int(np.clip(s_thr, cfg.sat_floor, cfg.sat_ceiling))
-
-    v_thr = int(np.quantile(v, cfg.val_quantile))
-    v_thr = int(np.clip(v_thr, cfg.val_floor, cfg.val_ceiling))
-
-    # 상대적으로 튀는 픽셀 마스크
-    mask = (s >= s_thr) & (v >= np.median(v))
-
-    # 행별로 "막대 후보" 행 찾기
-    row_ratio = mask.mean(axis=1)
-    hits = row_ratio >= cfg.row_hit_ratio
-
-    # 1D smoothing
-    if cfg.smooth_window >= 3 and hits.size >= cfg.smooth_window:
-        k = cfg.smooth_window
-        pad = k // 2
-        padded = np.pad(hits.astype(np.int32), (pad, pad), mode="edge")
-        sm = np.convolve(padded, np.ones(k, dtype=np.int32), mode="valid")
-        hits = sm >= int(np.ceil(k * 0.6))
-
-    if hits.sum() == 0:
-        return False
-
-    h, w = mask.shape
-    min_run = max(1, int(round(w * cfg.min_run_ratio)))
-
-    for y in np.where(hits)[0]:
-        if _long_run_exists(mask[y, :], min_run):
-            return True
-    return False
+# ======================
+# Utils
+# ======================
+def _clamp_int(x: int, lo: int, hi: int) -> int:
+    return max(lo, min(hi, x))
 
 
-def is_dual_sided_timer_cropped(img: Image.Image, cfg: DetectorConfig | None = None) -> bool:
+def _moving_average_1d(x: np.ndarray, win: int) -> np.ndarray:
+    if win <= 1:
+        return x
+    win = _clamp_int(int(win), 1, 101)  # 과도한 윈도우 방지
+    k = np.ones(win, dtype=np.float32) / float(win)
+    return np.convolve(x, k, mode="same").astype(np.float32)
+
+
+def _zscore_1d(x: np.ndarray, eps: float = 1e-6) -> Tuple[np.ndarray, float]:
+    x = x.astype(np.float32)
+    m = float(x.mean())
+    s = float(x.std())
+    return (x - m) / (s + eps), s
+
+
+def _split_left_right(gray: np.ndarray, center_ignore_ratio: float) -> Tuple[np.ndarray, np.ndarray]:
     """
-    입력이 '바 부분만 잘린 이미지'일 때:
-    좌측 절반에서 바 검출 AND 우측 절반에서 바 검출이면 True
+    gray: (H, W) float32/uint8
+    return: left_gray, right_gray (각각 H x W')
     """
-    cfg = cfg or DetectorConfig()
-    hsv = _to_hsv_np(img)
-    h, w = hsv.shape[:2]
+    h, w = gray.shape
+    ci = float(center_ignore_ratio)
+    ci = max(0.0, min(ci, 0.6))  # 중앙 버림이 과해지지 않게 제한
 
-    lx_end = int(round(w * cfg.split_left_end))
-    rx_start = int(round(w * cfg.split_right_start))
-    lx_end = max(1, min(w - 1, lx_end))
-    rx_start = max(lx_end, min(w - 1, rx_start))
+    l_end = int(w * (0.5 - ci / 2.0))
+    r_start = int(w * (0.5 + ci / 2.0))
 
-    left = hsv[:, :lx_end, :]
-    right = hsv[:, rx_start:, :]
+    l_end = _clamp_int(l_end, 1, w - 1)
+    r_start = _clamp_int(r_start, 1, w - 1)
 
-    return _detect_bar(left, cfg) and _detect_bar(right, cfg)
+    left = gray[:, :l_end]
+    right = gray[:, r_start:]
+    return left, right
+
+
+def _symmetry_score_profile(gray: np.ndarray, cfg: SymmetryConfig) -> Tuple[float, float]:
+    """
+    ROI가 매우 얇은(높이 작은) 바 이미지에 강한 방식:
+    - 각 절반에서 (세로 평균) 1D 밝기 프로파일을 만듦
+    - 우측은 flip해서 좌측과 방향을 맞춤
+    - 스무딩 후 z-score 정규화
+    - NCC(상관계수)와 L1(평균 절대오차)로 대칭성 평가
+    """
+    left, right = _split_left_right(gray, cfg.center_ignore_ratio)
+
+    # 세로 평균으로 1D 프로파일 생성
+    left_p = left.mean(axis=0).astype(np.float32)
+    right_p = right.mean(axis=0).astype(np.float32)
+
+    # 길이 맞추기 (짧은 쪽 기준)
+    m = int(min(left_p.shape[0], right_p.shape[0]))
+    if m < 10:
+        return -1.0, 999.0
+
+    left_p = left_p[:m]
+    right_p = right_p[-m:]  # 오른쪽 끝부터 m개
+    right_p = right_p[::-1]  # flip
+
+    # 스무딩
+    left_p = _moving_average_1d(left_p, cfg.smooth_window)
+    right_p = _moving_average_1d(right_p, cfg.smooth_window)
+
+    # 정규화
+    left_z, left_std = _zscore_1d(left_p)
+    right_z, right_std = _zscore_1d(right_p)
+
+    # “너무 평평한” 경우(표준편차 매우 작음)면 대칭 점수 신뢰도 낮음
+    if left_std < cfg.min_profile_std or right_std < cfg.min_profile_std:
+        return -1.0, 999.0
+
+    # NCC: [-1, 1], 1에 가까울수록 대칭
+    ncc = float(np.mean(left_z * right_z))
+
+    # L1: 작을수록 대칭
+    l1 = float(np.mean(np.abs(left_z - right_z)))
+    return ncc, l1
+
+
+# ======================
+# Public API
+# ======================
+def is_dual_sided_timer_cropped_symmetry(
+    img: Image.Image,
+    cfg: SymmetryConfig = SymmetryConfig(),
+) -> bool:
+    """
+    "바만" 크롭된 ROI 이미지에서 듀얼 타이머(양쪽 대칭 바)인지 판정.
+    """
+    rgb = img.convert("RGB")
+    arr = np.asarray(rgb, dtype=np.uint8)
+    gray = cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY).astype(np.float32)
+
+    ncc, l1 = _symmetry_score_profile(gray, cfg)
+
+    # 듀얼은 보통: ncc 높고, l1 낮음
+    return (ncc >= cfg.ncc_threshold) and (l1 <= cfg.l1_threshold)
+
+
+# ======================
+# (선택) 기존 함수명 유지하고 싶으면 아래처럼 래핑해서 교체
+# ======================
+def is_dual_sided_timer_cropped(img: Image.Image) -> bool:
+    return is_dual_sided_timer_cropped_symmetry(img)
