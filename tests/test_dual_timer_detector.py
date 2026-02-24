@@ -24,7 +24,7 @@ def _infer_expected_from_name(name: str) -> Optional[bool]:
 
 def _iter_images():
     exts = {".png", ".jpg", ".jpeg", ".webp", ".bmp"}
-    test_case = "test_4"
+    test_case = "test_3"
     test_dir = PATHS.TEST_BANPICK_TIMER_DIR / test_case
     for p in sorted(test_dir.iterdir()):
         if p.is_file() and p.suffix.lower() in exts:
