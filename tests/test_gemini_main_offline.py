@@ -128,6 +128,8 @@ def main():
     last_gemini_call_t = 0.0
     gemini_calls = 0
 
+    dual_buf = StateBuffer(size=7)
+
     for idx, p in enumerate(paths, start=1):
         img = Image.open(p).convert("RGB")
         window_size = (img.width, img.height)
@@ -218,10 +220,23 @@ def main():
             break
 
         if stable_state == "PREPARE":
-            if is_dual_timer_effective(timer_bar_img=banpick_timer_bar_img, timer_digits_img= banpick_timer_digit_img):
-                print("양팀 모든 챔피언 픽 됐습니다")
+            dual_now = is_dual_timer_effective(
+                timer_bar_img=banpick_timer_bar_img,
+                timer_digits_img=banpick_timer_digit_img,
+            )
+
+            dual_buf.push(dual_now)
+            dual_stable = dual_buf.get_majority()
+            dual_conf = dual_buf.get_confidence()
+
+            print(f" DualEffective → now={dual_now} stable={dual_stable} ({dual_conf:.2f})")
+
+            # ✅ 확정 조건: 다수결 True + 신뢰도 임계(선택)
+            if dual_stable is True and dual_conf >= 0.72:
+                print("양팀 모든 챔피언 픽 됐습니다 (stable)")
                 break
-            
+        else:
+            dual_buf = StateBuffer(size=7)            
 
         if SLEEP_SEC:
             time.sleep(SLEEP_SEC)
