@@ -18,6 +18,7 @@ from pipeline.classifier import StateClassifier
 from pipeline.buffer import StateBuffer
 from pipeline.state_manager import StableStateManager
 from pipeline.pick_stage_detector import detect_pick_kind_from_banned_strips
+from pipeline.prepare_phase_detector import is_dual_timer_effective
 
 
 from config.prompts import DRAFT_FROM_IMAGE_PROMPT_LITE
@@ -110,7 +111,7 @@ def crop_picked_champs_texts_and_portraits_area(img: Image.Image, window_size: t
 # 메인 테스트 루프
 # ======================
 def main():
-    test_case = "test_4"
+    test_case = "test_3"
     img_dir = PATHS.TEST_LOL_CLIENT_DIR / test_case
     print(img_dir)
     paths = sorted(img_dir.glob("*.png"))
@@ -139,6 +140,9 @@ def main():
         total_picked_texts_img = crop_picked_champs_texts_area(img = img, window_size= window_size)
         total_picked_texts_and_portrait_img = crop_picked_champs_texts_and_portraits_area(img = img, window_size= window_size)
 
+        banpick_timer_bar_img = crop_roi_relative_xy(img, window_size, ROI.BANPICK_TIMER_BAR)
+        banpick_timer_digit_img = crop_roi_relative_xy(img, window_size, ROI.BANPICK_TIMER_DIGITS)
+
         # OCR → 상태 분류
         ocr = extract_text(status_img)
         norm = normalizer.normalize(ocr)
@@ -154,6 +158,7 @@ def main():
         print(f" StableState → {stable_state} | OCR={ocr!r} | norm={norm!r} | cls={cls!r} | buf={candidate}({confidence:.2f})")
 
         if stable_state == "PICK":
+            continue
             pick_res = detect_pick_kind_from_banned_strips(my_banned_img, enemy_banned_img, std_threshold=STD_THRESHOLD)
             print(" PICK 판정:", pick_res.kind, "std:", round(pick_res.std, 2))
 
@@ -213,9 +218,10 @@ def main():
             break
 
         if stable_state == "PREPARE":
-            # main.py와 동일하게 PREPARE는 다음 프레임
-            print(" (PREPARE → 다음 프레임)")
-            continue
+            if is_dual_timer_effective(timer_bar_img=banpick_timer_bar_img, timer_digits_img= banpick_timer_digit_img):
+                print("양팀 모든 챔피언 픽 됐습니다")
+                break
+            
 
         if SLEEP_SEC:
             time.sleep(SLEEP_SEC)
