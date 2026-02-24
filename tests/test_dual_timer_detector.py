@@ -16,7 +16,7 @@ def _infer_expected_from_name(name: str) -> Optional[bool]:
     if any(k in n for k in ["dual", "both", "양쪽"]):
         return True
 
-    if any(k in n for k in ["single", "one", "한쪽"]):
+    if any(k in n for k in ["single", "한쪽"]):
         return False
 
     return None
@@ -24,7 +24,7 @@ def _infer_expected_from_name(name: str) -> Optional[bool]:
 
 def _iter_images():
     exts = {".png", ".jpg", ".jpeg", ".webp", ".bmp"}
-    test_case = "test_3"
+    test_case = "test_4"
     test_dir = PATHS.TEST_BANPICK_TIMER_DIR / test_case
     for p in sorted(test_dir.iterdir()):
         if p.is_file() and p.suffix.lower() in exts:

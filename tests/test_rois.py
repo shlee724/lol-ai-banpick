@@ -217,4 +217,4 @@ def merge_images_vertical(
     return new_img
 
 if __name__ == "__main__":
-    run_batch_picked_champs_text_only_roi_cut()
+    run_batch_banpick_timer_bar_roi_cut()

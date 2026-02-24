@@ -4,7 +4,7 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class ROISet:
     BANPICK_STATUS_TEXT = (0.28, 0.00, 0.44, 0.08)
-    BANPICK_TIMER_BAR = (0.28, 0.08, 0.44, 0.02)
+    BANPICK_TIMER_BAR = (0.28, 0.084, 0.44, 0.007)
 
     BANNED_CHAMPIONS_CENTER = (0.29, 0.16, 0.42, 0.59)
     BANNED_CHAMPIONS_MY_TEAM = (0.01, 0.04, 0.15, 0.045)

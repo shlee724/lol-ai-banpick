@@ -9,8 +9,8 @@ from PIL import Image
 @dataclass
 class DetectorConfig:
     # 좌/우 분할 비율 (중앙 경계에 UI가 걸칠 수 있어 약간의 안전 마진)
-    split_left_end: float = 0.45
-    split_right_start: float = 0.55
+    split_left_end: float = 0.425
+    split_right_start: float = 0.575
 
     # 바는 가로로 긴 연속 구간이어야 함
     min_run_ratio: float = 0.35  # 반쪽 너비 대비 22% 이상 연속 True면 바
