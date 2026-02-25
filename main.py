@@ -112,7 +112,9 @@ while True:
 
 
         if stable_state == "PICK":
-
+            
+            if raw_state == "BAN":
+                continue
             if pick_real_executed:
                 #print(" (PICK_REAL algo already executed once - skip)")
                 continue

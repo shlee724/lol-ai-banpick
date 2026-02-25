@@ -175,6 +175,11 @@ def main() -> None:
         # 분기 로직(main.py 동일)
         # ======================
         if stable_state == "PICK":
+            if raw_state == "BAN":
+                processed += 1
+                time.sleep(args.sleep)
+                continue
+
             if pick_real_executed:
                 processed += 1
                 time.sleep(args.sleep)
