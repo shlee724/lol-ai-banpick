@@ -33,7 +33,7 @@ pick_coach_client = get_client()
 playplan_coach_client = get_playplan_coach_client()
 
 SLEEP_SEC = 0.01
-STD_THRESHOLD = 30.0
+PICK_STD_THRESHOLD = 30.0
 MODEL_VISION = "gemini-3-flash-preview"
 MODEL_TEXT = "gemini-3-flash-preview"
 
@@ -42,7 +42,7 @@ MY_TIER = "BRONZE"     # UNRANKED/IRON/BRONZE/SILVER/GOLD/PLATINUM/EMERALD/DIAMO
 MY_CHAMP_POOL = ["Malzahar", "Oriana", "Galio", "Mundo", "Garen", "Malphite", "Cho'gath", "Nasus", "kassadin"]  # 예시
 
 DEBUG_SAVE = False
-did_pick_algo = False  # PICK_REAL 알고리즘 1회 실행 보장
+pick_real_executed = False  # PICK_REAL 알고리즘 1회 실행 보장
 
 def merge_images_horizontal(img1: Image.Image, img2: Image.Image, bg_color=(255, 255, 255)) -> Image.Image:
     new_width = img1.width + img2.width
@@ -61,45 +61,45 @@ while True:
         x, y, w, h = window_rect_screen
         window_size = (w, h)
         #print(f"창 위치: ({x},{y}) 크기: {w}x{h}")
-        img = capture_window(tracker.hwnd, w, h)        #롤 클라이언트 전체 이미지 (Image.Image)
-        status_img = crop_roi_relative_xy(img, window_size ,ROI.BANPICK_STATUS_TEXT)   #밴픽 상태메시지 캡처
+        frame_img = capture_window(tracker.hwnd, w, h)        #롤 클라이언트 전체 이미지 (Image.Image)
+        status_img = crop_roi_relative_xy(frame_img, window_size ,ROI.BANPICK_STATUS_TEXT)   #밴픽 상태메시지 캡처
 
         if DEBUG_SAVE:
-            img.save(PATHS.LOL_CLIENT_CAPTURE_PNG)
+            frame_img.save(PATHS.LOL_CLIENT_CAPTURE_PNG)
             status_img.save(PATHS.BANPICK_STATUS_TEXT_CAPTURE_PNG)
 
-        my_banned_img = crop_roi_relative_xy(img, window_size, ROI.BANNED_CHAMPIONS_MY_TEAM)
-        enemy_banned_img = crop_roi_relative_xy(img, window_size, ROI.BANNED_CHAMPIONS_ENEMY_TEAM)
-        my_picked_img = crop_roi_relative_xy(img, window_size, ROI.PICKED_CHAMPIONS_MY_TEAM)
-        enemy_picked_img = crop_roi_relative_xy(img, window_size, ROI.PICKED_CHAMPIONS_ENEMY_TEAM)
-        total_banned_img = merge_images_horizontal(my_banned_img, enemy_banned_img)
-        total_picked_img = merge_images_horizontal(my_picked_img, enemy_picked_img)
-        banpick_timer_bar_img = crop_roi_relative_xy(img, window_size, ROI.BANPICK_TIMER_BAR)
-        banpick_timer_digit_img = crop_roi_relative_xy(img, window_size, ROI.BANPICK_TIMER_DIGITS)
-
+        my_banned_img = crop_roi_relative_xy(frame_img, window_size, ROI.BANNED_CHAMPIONS_MY_TEAM)
+        enemy_banned_img = crop_roi_relative_xy(frame_img, window_size, ROI.BANNED_CHAMPIONS_ENEMY_TEAM)
+        my_picked_img = crop_roi_relative_xy(frame_img, window_size, ROI.PICKED_CHAMPIONS_MY_TEAM)
+        enemy_picked_img = crop_roi_relative_xy(frame_img, window_size, ROI.PICKED_CHAMPIONS_ENEMY_TEAM)
+        bans_merged_img = merge_images_horizontal(my_banned_img, enemy_banned_img)
+        picks_merged_img = merge_images_horizontal(my_picked_img, enemy_picked_img)
+        banpick_timer_bar_img = crop_roi_relative_xy(frame_img, window_size, ROI.BANPICK_TIMER_BAR)
+        banpick_timer_digit_img = crop_roi_relative_xy(frame_img, window_size, ROI.BANPICK_TIMER_DIGITS)
+        
         # OCR
-        text = extract_text(status_img)
+        status_text_raw = extract_text(status_img)
 
         # Pipeline
-        norm = normalizer.normalize(text)
-        state = classifier.classify(norm)
+        status_text_norm = normalizer.normalize(status_text_raw)
+        raw_state = classifier.classify(status_text_norm)
 
-        buffer.push(state)
-        candidate = buffer.get_majority()
-        confidence = buffer.get_confidence()
+        buffer.push(raw_state)
+        major_state = buffer.get_majority()
+        major_conf = buffer.get_confidence()
 
-        stable_state = state_manager.update(candidate, confidence)       
+        stable_state = state_manager.update(major_state, major_conf)       
         #print(f" StableState → {stable_state}") 
 
 
 
         if stable_state == "PICK":
 
-            if did_pick_algo:
+            if pick_real_executed:
                 #print(" (PICK_REAL algo already executed once - skip)")
                 continue
 
-            pick_res = detect_pick_kind_from_banned_strips(my_banned_img, enemy_banned_img, std_threshold=STD_THRESHOLD)
+            pick_res = detect_pick_kind_from_banned_strips(my_banned_img, enemy_banned_img, std_threshold=PICK_STD_THRESHOLD)
             print("PICK 판정:", pick_res.kind, "std:", round(pick_res.std, 2))
 
             if pick_res.kind == "PICK_REAL":
@@ -107,26 +107,26 @@ while True:
                 # 제미나이 api에 픽 정보 보내기
                 try:
                     buf = []
-                    t0 = time.perf_counter()
+                    stream_start_t = time.perf_counter()
                     first_token_t = None
 
-                    for delta in lol_mid_pick_coach_stream(total_picked_img, client=pick_coach_client, model="gemini-2.5-pro"):
+                    for delta in lol_mid_pick_coach_stream(picks_merged_img, client=pick_coach_client, model="gemini-2.5-pro"):
                         if first_token_t is None:
                             first_token_t = time.perf_counter()
-                            print(f"\n⏱ 첫 토큰: {first_token_t - t0:.2f}s\n")
+                            print(f"\n⏱ 첫 토큰: {first_token_t - stream_start_t:.2f}s\n")
 
                         print(delta, end="", flush=True)
                         buf.append(delta)
 
-                    t1 = time.perf_counter()
-                    print(f"\n\n⏱ 전체: {t1 - t0:.2f}s")
+                    stream_end_t = time.perf_counter()
+                    print(f"\n\n⏱ 전체: {stream_end_t - stream_start_t:.2f}s")
                     final_text = "".join(buf)
 
                 except Exception as e:
                     print(" ❌ Gemini 호출 실패:", repr(e))
                     continue                
 
-                did_pick_algo = True
+                pick_real_executed = True
                 continue
 
         if stable_state == "PREPARE":
@@ -146,23 +146,23 @@ while True:
                 print("양팀 모든 챔피언 픽 됐습니다 (stable)")
                 
                 buf = []
-                t0 = time.perf_counter()
+                stream_start_t = time.perf_counter()
                 first_token_t = None
 
                 for delta in lol_playplan_stream(
-                    total_picked_img,
+                    picks_merged_img,
                     client=playplan_coach_client,
                     model="gemini-2.5-pro",
                 ):
                     if first_token_t is None:
                         first_token_t = time.perf_counter()
-                        print(f"\n⏱ 첫 토큰: {first_token_t - t0:.2f}s\n")
+                        print(f"\n⏱ 첫 토큰: {first_token_t - stream_start_t:.2f}s\n")
 
                     print(delta, end="", flush=True)
                     buf.append(delta)
 
-                t1 = time.perf_counter()
-                print(f"\n\n⏱ 전체: {t1 - t0:.2f}s")
+                stream_end_t = time.perf_counter()
+                print(f"\n\n⏱ 전체: {stream_end_t - stream_start_t:.2f}s")
 
                 final_text = "".join(buf)
                 break
