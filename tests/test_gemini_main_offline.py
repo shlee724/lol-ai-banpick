@@ -112,7 +112,7 @@ def crop_picked_champs_texts_and_portraits_area(img: Image.Image, window_size: t
 # 메인 테스트 루프
 # ======================
 def main():
-    test_case = "test_6"
+    test_case = "test_1"
     img_dir = PATHS.TEST_LOL_CLIENT_DIR / test_case
     print(img_dir)
     paths = sorted(img_dir.glob("*.png"))
@@ -129,6 +129,7 @@ def main():
     playplan_coach_client = get_playplan_coach_client()
     last_gemini_call_t = 0.0
     gemini_calls = 0
+    did_pick_algo = False  # PICK_REAL 알고리즘 1회 실행 보장
 
     dual_buf = StateBuffer(size=7)
 
@@ -162,11 +163,14 @@ def main():
         print(f" StableState → {stable_state} | OCR={ocr!r} | norm={norm!r} | cls={cls!r} | buf={candidate}({confidence:.2f})")
 
         if stable_state == "PICK":
-            continue
             pick_res = detect_pick_kind_from_banned_strips(my_banned_img, enemy_banned_img, std_threshold=STD_THRESHOLD)
             print(" PICK 판정:", pick_res.kind, "std:", round(pick_res.std, 2))
 
             if pick_res.kind != "PICK_REAL":
+                continue
+
+            if did_pick_algo:
+                print(" (PICK_REAL algo already executed once - skip)")
                 continue
 
             # Gemini 호출 쿨다운 + 호출 횟수 제한
@@ -219,7 +223,8 @@ def main():
             gemini_calls += 1
             last_gemini_call_t = now
 
-            break
+            did_pick_algo = True
+            continue
 
         if stable_state == "PREPARE":
             dual_now = is_dual_timer_effective(
