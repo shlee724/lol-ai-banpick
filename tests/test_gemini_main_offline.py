@@ -50,6 +50,22 @@ def merge_images_horizontal(img1: Image.Image, img2: Image.Image, bg_color=(255,
     new_img.paste(img2, (img1.width, 0))
     return new_img
 
+def run_streaming(label: str, stream_iter) -> str:
+    buf = []
+    t0 = time.perf_counter()
+    first_token_t = None
+
+    for delta in stream_iter:
+        if first_token_t is None:
+            first_token_t = time.perf_counter()
+            print(f"\n[{label}] ⏱ 첫 토큰: {first_token_t - t0:.2f}s\n")
+        print(delta, end="", flush=True)
+        buf.append(delta)
+
+    t1 = time.perf_counter()
+    print(f"\n\n[{label}] ⏱ 전체: {t1 - t0:.2f}s")
+    return "".join(buf)
+
 def merge_images_vertical(
     images: List[Image.Image],
     bg_color=(255, 255, 255)
@@ -112,7 +128,7 @@ def crop_picked_champs_texts_and_portraits_area(img: Image.Image, window_size: t
 # 메인 테스트 루프
 # ======================
 def main():
-    test_case = "test_1"
+    test_case = "test_3"
     img_dir = PATHS.TEST_LOL_CLIENT_DIR / test_case
     print(img_dir)
     paths = sorted(img_dir.glob("*.png"))
@@ -184,37 +200,15 @@ def main():
 
 
             try:
-                buf = []
-                t0 = time.perf_counter()
-                first_token_t = None
+                final_text = run_streaming(
+                    "PICK_COACH",
+                    lol_mid_pick_coach_stream(total_picked_texts_img, client=pick_coach_client, model="gemini-2.5-pro")
+                )
 
-                for delta in lol_mid_pick_coach_stream(total_picked_texts_img, client = pick_coach_client, model="gemini-2.5-pro"):
-                    if first_token_t is None:
-                        first_token_t = time.perf_counter()
-                        print(f"\n⏱ 첫 토큰: {first_token_t - t0:.2f}s\n")
-
-                    print(delta, end="", flush=True)
-                    buf.append(delta)
-
-                t1 = time.perf_counter()
-                print(f"\n\n⏱ 전체: {t1 - t0:.2f}s")
-                final_text = "".join(buf)
-
-                buf = []
-                t0 = time.perf_counter()
-                first_token_t = None
-
-                for delta in lol_mid_pick_coach_stream(total_picked_texts_and_portrait_img, client = pick_coach_client, model="gemini-2.5-pro"):
-                    if first_token_t is None:
-                        first_token_t = time.perf_counter()
-                        print(f"\n⏱ 첫 토큰: {first_token_t - t0:.2f}s\n")
-
-                    print(delta, end="", flush=True)
-                    buf.append(delta)
-
-                t1 = time.perf_counter()
-                print(f"\n\n⏱ 전체: {t1 - t0:.2f}s")
-                final_text = "".join(buf)
+                final_text = run_streaming(
+                    "PICK_COACH",
+                    lol_mid_pick_coach_stream(total_picked_texts_and_portrait_img, client=pick_coach_client, model="gemini-2.5-pro")
+                )
 
             except Exception as e:
                 print(" ❌ Gemini 호출 실패:", repr(e))
@@ -241,27 +235,16 @@ def main():
             # ✅ 확정 조건: 다수결 True + 신뢰도 임계(선택)
             if dual_stable is True and dual_conf >= 0.72:
                 print("양팀 모든 챔피언 픽 됐습니다 (stable)")
-                
-                buf = []
-                t0 = time.perf_counter()
-                first_token_t = None
 
-                for delta in lol_playplan_stream(
-                    total_picked_texts_img,
-                    client=playplan_coach_client,
-                    model="gemini-2.5-pro",
-                ):
-                    if first_token_t is None:
-                        first_token_t = time.perf_counter()
-                        print(f"\n⏱ 첫 토큰: {first_token_t - t0:.2f}s\n")
+                final_text = run_streaming(
+                    "PLAYPLAN_COACH",
+                    lol_playplan_stream(total_picked_texts_img, client=playplan_coach_client, model="gemini-2.5-pro")
+                )
 
-                    print(delta, end="", flush=True)
-                    buf.append(delta)
-
-                t1 = time.perf_counter()
-                print(f"\n\n⏱ 전체: {t1 - t0:.2f}s")
-
-                final_text = "".join(buf)
+                final_text = run_streaming(
+                    "PLAYPLAN_COACH",
+                    lol_playplan_stream(total_picked_texts_and_portrait_img, client=playplan_coach_client, model="gemini-2.5-pro")
+                )
                 break
         else:
             dual_buf.reset()          

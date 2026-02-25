@@ -55,6 +55,22 @@ def merge_images_horizontal(img1: Image.Image, img2: Image.Image, bg_color=(255,
     new_img.paste(img2, (img1.width, 0))
     return new_img
 
+def run_streaming(label: str, stream_iter) -> str:
+    buf = []
+    t0 = time.perf_counter()
+    first_token_t = None
+
+    for delta in stream_iter:
+        if first_token_t is None:
+            first_token_t = time.perf_counter()
+            print(f"\n[{label}] ⏱ 첫 토큰: {first_token_t - t0:.2f}s\n")
+        print(delta, end="", flush=True)
+        buf.append(delta)
+
+    t1 = time.perf_counter()
+    print(f"\n\n[{label}] ⏱ 전체: {t1 - t0:.2f}s")
+    return "".join(buf)
+
 while True:
     window_rect_screen = tracker.get_window_rect()
     if window_rect_screen is None:
@@ -108,21 +124,10 @@ while True:
                 # 진짜 픽 단계 로직 실행
                 # 제미나이 api에 픽 정보 보내기
                 try:
-                    buf = []
-                    stream_start_t = time.perf_counter()
-                    first_token_t = None
-
-                    for delta in lol_mid_pick_coach_stream(picks_merged_img, client=pick_coach_client, model="gemini-2.5-pro"):
-                        if first_token_t is None:
-                            first_token_t = time.perf_counter()
-                            print(f"\n⏱ 첫 토큰: {first_token_t - stream_start_t:.2f}s\n")
-
-                        print(delta, end="", flush=True)
-                        buf.append(delta)
-
-                    stream_end_t = time.perf_counter()
-                    print(f"\n\n⏱ 전체: {stream_end_t - stream_start_t:.2f}s")
-                    final_text = "".join(buf)
+                    final_text = run_streaming(
+                        "PICK_COACH",
+                        lol_mid_pick_coach_stream(picks_merged_img, client=pick_coach_client, model="gemini-2.5-pro")
+                    )
 
                 except Exception as e:
                     print(" ❌ Gemini 호출 실패:", repr(e))
@@ -147,26 +152,11 @@ while True:
             if dual_stable is True and dual_conf >= 0.72:
                 print("양팀 모든 챔피언 픽 됐습니다 (stable)")
                 
-                buf = []
-                stream_start_t = time.perf_counter()
-                first_token_t = None
+                final_text = run_streaming(
+                    "PLAYPLAN_COACH",
+                    lol_playplan_stream(picks_merged_img, client=playplan_coach_client, model="gemini-2.5-pro")
+                )
 
-                for delta in lol_playplan_stream(
-                    picks_merged_img,
-                    client=playplan_coach_client,
-                    model="gemini-2.5-pro",
-                ):
-                    if first_token_t is None:
-                        first_token_t = time.perf_counter()
-                        print(f"\n⏱ 첫 토큰: {first_token_t - stream_start_t:.2f}s\n")
-
-                    print(delta, end="", flush=True)
-                    buf.append(delta)
-
-                stream_end_t = time.perf_counter()
-                print(f"\n\n⏱ 전체: {stream_end_t - stream_start_t:.2f}s")
-
-                final_text = "".join(buf)
                 break
         else:
             dual_buf.reset()
