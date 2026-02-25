@@ -264,7 +264,7 @@ def main():
                 final_text = "".join(buf)
                 break
         else:
-            dual_buf = StateBuffer(size=7)            
+            dual_buf.reset()          
 
         if SLEEP_SEC:
             time.sleep(SLEEP_SEC)

@@ -3,6 +3,9 @@ from collections import deque, Counter
 class StateBuffer:
     def __init__(self, size: int = 7):
         self.buffer = deque(maxlen=size)
+        
+    def reset(self) -> None:
+        self.buffer.clear()
 
     def push(self, state: str):
         self.buffer.append(state)

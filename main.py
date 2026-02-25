@@ -44,6 +44,8 @@ MY_CHAMP_POOL = ["Malzahar", "Oriana", "Galio", "Mundo", "Garen", "Malphite", "C
 DEBUG_SAVE = False
 pick_real_executed = False  # PICK_REAL 알고리즘 1회 실행 보장
 
+dual_buf = StateBuffer(size=7)
+
 def merge_images_horizontal(img1: Image.Image, img2: Image.Image, bg_color=(255, 255, 255)) -> Image.Image:
     new_width = img1.width + img2.width
     new_height = max(img1.height, img2.height)
@@ -167,6 +169,6 @@ while True:
                 final_text = "".join(buf)
                 break
         else:
-            dual_buf = StateBuffer(size=7)  
+            dual_buf.reset()
 
     time.sleep(SLEEP_SEC)
