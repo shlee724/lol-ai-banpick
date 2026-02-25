@@ -128,7 +128,7 @@ def crop_picked_champs_texts_and_portraits_area(img: Image.Image, window_size: t
 # 메인 테스트 루프
 # ======================
 def main():
-    test_case = "test_3"
+    test_case = "test_6"
     img_dir = PATHS.TEST_LOL_CLIENT_DIR / test_case
     print(img_dir)
     paths = sorted(img_dir.glob("*.png"))
@@ -220,7 +220,7 @@ def main():
             did_pick_algo = True
             continue
 
-        if stable_state == "PREPARE":
+        elif stable_state == "PREPARE":
             dual_now = is_dual_timer_effective(
                 timer_bar_img=banpick_timer_bar_img,
                 timer_digits_img=banpick_timer_digit_img,

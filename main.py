@@ -136,7 +136,7 @@ while True:
                 pick_real_executed = True
                 continue
 
-        if stable_state == "PREPARE":
+        elif stable_state == "PREPARE":
             dual_now = is_dual_timer_effective(
                 timer_bar_img=banpick_timer_bar_img,
                 timer_digits_img=banpick_timer_digit_img,
@@ -148,7 +148,6 @@ while True:
 
             print(f" DualEffective → now={dual_now} stable={dual_stable} ({dual_conf:.2f})")
 
-            # ✅ 확정 조건: 다수결 True + 신뢰도 임계(선택)
             if dual_stable is True and dual_conf >= 0.72:
                 print("양팀 모든 챔피언 픽 됐습니다 (stable)")
                 
