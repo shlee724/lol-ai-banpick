@@ -1,11 +1,11 @@
 # core/gemini_text.py
 from __future__ import annotations
 
-import os
 import json
+import os
 import re
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from dotenv import load_dotenv
 from google import genai
@@ -37,14 +37,14 @@ def _extract_json_text(text: str) -> str:
         start = t.find("{")
         end = t.rfind("}")
         if start < end:
-            return t[start:end + 1].strip()
+            return t[start : end + 1].strip()
 
     # 3) 리스트 JSON: 첫 '['부터 마지막 ']'까지
     if "[" in t and "]" in t:
         start = t.find("[")
         end = t.rfind("]")
         if start < end:
-            return t[start:end + 1].strip()
+            return t[start : end + 1].strip()
 
     return t
 
@@ -90,7 +90,5 @@ def generate_text_json(
         return json.loads(cleaned)
     except Exception as e:
         raise RuntimeError(
-            f"Gemini JSON 파싱 실패: {e}\n"
-            f"--- cleaned ---\n{cleaned}\n"
-            f"--- raw text ---\n{res.text}"
+            f"Gemini JSON 파싱 실패: {e}\n--- cleaned ---\n{cleaned}\n--- raw text ---\n{res.text}"
         )

@@ -1,9 +1,12 @@
 from pathlib import Path
-from PIL import Image
-from config.roi import ROI
-from config.path import PATHS
-from core.roi_manager import crop_roi_relative_xy
 from typing import List
+
+from PIL import Image
+
+from config.path import PATHS
+from config.roi import ROI
+from core.roi_manager import crop_roi_relative_xy
+
 
 def run_batch_banned_slots_roi_cut():
     img_dir: Path = PATHS.TEST_LOL_CLIENT_DIR
@@ -15,10 +18,9 @@ def run_batch_banned_slots_roi_cut():
 
     save_dir.mkdir(parents=True, exist_ok=True)  # ✅ 저장 폴더 보장
 
-    img_files = sorted([
-        p for p in img_dir.iterdir()
-        if p.suffix.lower() in [".png", ".jpg", ".jpeg"]
-    ])
+    img_files = sorted(
+        [p for p in img_dir.iterdir() if p.suffix.lower() in [".png", ".jpg", ".jpeg"]]
+    )
 
     print(f"📂 대상 이미지 수: {len(img_files)}")
 
@@ -45,6 +47,7 @@ def run_batch_banned_slots_roi_cut():
 
     return results
 
+
 def run_batch_picked_champs_roi_cut():
     img_dir: Path = PATHS.TEST_LOL_CLIENT_DIR
     save_dir: Path = PATHS.TEST_PICKED_CHAMPS_DIR
@@ -55,10 +58,9 @@ def run_batch_picked_champs_roi_cut():
 
     save_dir.mkdir(parents=True, exist_ok=True)  # ✅ 저장 폴더 보장
 
-    img_files = sorted([
-        p for p in img_dir.iterdir()
-        if p.suffix.lower() in [".png", ".jpg", ".jpeg"]
-    ])
+    img_files = sorted(
+        [p for p in img_dir.iterdir() if p.suffix.lower() in [".png", ".jpg", ".jpeg"]]
+    )
 
     print(f"📂 대상 이미지 수: {len(img_files)}")
 
@@ -85,6 +87,7 @@ def run_batch_picked_champs_roi_cut():
 
     return results
 
+
 def run_batch_banpick_timer_bar_roi_cut():
     img_dir: Path = PATHS.TEST_LOL_CLIENT_DIR
     save_dir: Path = PATHS.TEST_BANPICK_TIMER_DIR
@@ -95,10 +98,9 @@ def run_batch_banpick_timer_bar_roi_cut():
 
     save_dir.mkdir(parents=True, exist_ok=True)  # ✅ 저장 폴더 보장
 
-    img_files = sorted([
-        p for p in img_dir.iterdir()
-        if p.suffix.lower() in [".png", ".jpg", ".jpeg"]
-    ])
+    img_files = sorted(
+        [p for p in img_dir.iterdir() if p.suffix.lower() in [".png", ".jpg", ".jpeg"]]
+    )
 
     print(f"📂 대상 이미지 수: {len(img_files)}")
 
@@ -122,6 +124,7 @@ def run_batch_banpick_timer_bar_roi_cut():
 
     return results
 
+
 def run_batch_picked_champs_text_only_roi_cut():
     img_dir: Path = PATHS.TEST_LOL_CLIENT_DIR
     save_dir: Path = PATHS.TEST_PICKED_CHAMPS_TEXT_ONLY_DIR
@@ -132,10 +135,9 @@ def run_batch_picked_champs_text_only_roi_cut():
 
     save_dir.mkdir(parents=True, exist_ok=True)  # ✅ 저장 폴더 보장
 
-    img_files = sorted([
-        p for p in img_dir.iterdir()
-        if p.suffix.lower() in [".png", ".jpg", ".jpeg"]
-    ])
+    img_files = sorted(
+        [p for p in img_dir.iterdir() if p.suffix.lower() in [".png", ".jpg", ".jpeg"]]
+    )
 
     print(f"📂 대상 이미지 수: {len(img_files)}")
 
@@ -162,8 +164,25 @@ def run_batch_picked_champs_text_only_roi_cut():
             my_pos_4 = crop_roi_relative_xy(img, window_size, ROI.MY_TEAM_POS4)
             my_pos_5 = crop_roi_relative_xy(img, window_size, ROI.MY_TEAM_POS5)
 
-            my_list = [my_pos_1,my_picked_1, my_pos_2,my_picked_2, my_pos_3,my_picked_3, my_pos_4,my_picked_4, my_pos_5,my_picked_5]
-            enemy_list = [enemy_picked_1, enemy_picked_2, enemy_picked_3, enemy_picked_4, enemy_picked_5]
+            my_list = [
+                my_pos_1,
+                my_picked_1,
+                my_pos_2,
+                my_picked_2,
+                my_pos_3,
+                my_picked_3,
+                my_pos_4,
+                my_picked_4,
+                my_pos_5,
+                my_picked_5,
+            ]
+            enemy_list = [
+                enemy_picked_1,
+                enemy_picked_2,
+                enemy_picked_3,
+                enemy_picked_4,
+                enemy_picked_5,
+            ]
 
             my_picked_merge = merge_images_vertical(images=my_list)
             enemy_picked_merge = merge_images_vertical(images=enemy_list)
@@ -182,7 +201,9 @@ def run_batch_picked_champs_text_only_roi_cut():
     return results
 
 
-def merge_images_horizontal(img1: Image.Image, img2: Image.Image, bg_color=(255, 255, 255)) -> Image.Image:
+def merge_images_horizontal(
+    img1: Image.Image, img2: Image.Image, bg_color=(255, 255, 255)
+) -> Image.Image:
     new_width = img1.width + img2.width
     new_height = max(img1.height, img2.height)
 
@@ -191,10 +212,8 @@ def merge_images_horizontal(img1: Image.Image, img2: Image.Image, bg_color=(255,
     new_img.paste(img2, (img1.width, 0))
     return new_img
 
-def merge_images_vertical(
-    images: List[Image.Image],
-    bg_color=(255, 255, 255)
-) -> Image.Image:
+
+def merge_images_vertical(images: List[Image.Image], bg_color=(255, 255, 255)) -> Image.Image:
     """
     여러 이미지를 세로로 이어 붙인다.
     - 너비는 가장 넓은 이미지 기준
@@ -215,6 +234,7 @@ def merge_images_vertical(
         y_offset += img.height
 
     return new_img
+
 
 if __name__ == "__main__":
     run_batch_banpick_timer_bar_roi_cut()

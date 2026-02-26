@@ -4,6 +4,7 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]  # TEST_PROJECT
 
+
 @dataclass(frozen=True)
 class Paths:
     CAPTURE_DIR: Path = PROJECT_ROOT / "captured_images"
@@ -19,5 +20,6 @@ class Paths:
     TEST_BANNED_SLOTS_DIR: Path = TEST_IMAGES_DIR / "banned_slots"
     TEST_PICKED_CHAMPS_DIR: Path = TEST_IMAGES_DIR / "picked_champs"
     TEST_PICKED_CHAMPS_TEXT_ONLY_DIR: Path = TEST_IMAGES_DIR / "picked_champs_text_only"
+
 
 PATHS = Paths()

@@ -1,12 +1,11 @@
 # core/screen_capture.py
 
+import ctypes
+
+import numpy as np
 import win32gui
 import win32ui
-import win32con
-import ctypes
-import numpy as np
 from PIL import Image
-from typing import Tuple
 
 
 def capture_window(hwnd: int, width: int, height: int) -> Image.Image:
@@ -30,7 +29,7 @@ def capture_window(hwnd: int, width: int, height: int) -> Image.Image:
     bmp_str = save_bitmap.GetBitmapBits(True)
 
     img = np.frombuffer(bmp_str, dtype=np.uint8)
-    img.shape = (bmp_info['bmHeight'], bmp_info['bmWidth'], 4)
+    img.shape = (bmp_info["bmHeight"], bmp_info["bmWidth"], 4)
 
     img = img[:, :, :3][:, :, ::-1]  # BGRA → RGB
 
@@ -41,6 +40,7 @@ def capture_window(hwnd: int, width: int, height: int) -> Image.Image:
     win32gui.ReleaseDC(hwnd, hwnd_dc)
 
     return Image.fromarray(img)
+
 
 def crop_roi(img: Image.Image, x: int, y: int, w: int, h: int) -> Image.Image:
     """

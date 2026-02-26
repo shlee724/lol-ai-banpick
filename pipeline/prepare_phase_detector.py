@@ -1,15 +1,15 @@
 # pipeline/prepare_phase_detector.py
 from __future__ import annotations
 
-from dataclasses import dataclass
 import re
+from dataclasses import dataclass
 from typing import Optional
 
-import numpy as np
 import cv2
+import numpy as np
 from PIL import Image
 
-from pipeline.dual_timer_detector import is_dual_sided_timer_cropped_symmetry, SymmetryConfig
+from pipeline.dual_timer_detector import SymmetryConfig, is_dual_sided_timer_cropped_symmetry
 
 
 # ======================
@@ -60,10 +60,7 @@ def _preprocess_digits_for_ocr(img: Image.Image) -> Image.Image:
     # 블러 -> 적응형 임계(명암 변화에 강함)
     gray = cv2.GaussianBlur(gray, (3, 3), 0)
     bin_img = cv2.adaptiveThreshold(
-        gray, 255,
-        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-        cv2.THRESH_BINARY_INV,
-        31, 7
+        gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 31, 7
     )
 
     return Image.fromarray(bin_img)
@@ -159,7 +156,9 @@ def _visual_near_zero_fallback(digits_img: Image.Image, cfg: PreparePhaseConfig)
 # ======================
 # Public API
 # ======================
-def is_timer_near_zero(timer_digits_img: Image.Image, cfg: PreparePhaseConfig = PreparePhaseConfig()) -> bool:
+def is_timer_near_zero(
+    timer_digits_img: Image.Image, cfg: PreparePhaseConfig = PreparePhaseConfig()
+) -> bool:
     """
     타이머 중앙 숫자가 0(또는 0에 준함)인지 판정.
     """

@@ -1,10 +1,8 @@
-import pytest
 from PIL import Image
 
 from pipeline.prepare_phase_detector import (
-    is_timer_near_zero,
     is_dual_timer_effective,
-    PreparePhaseConfig,
+    is_timer_near_zero,
 )
 
 
@@ -30,17 +28,14 @@ class DummyOCR:
 # is_timer_near_zero 테스트
 # ----------------------------
 
+
 def test_timer_near_zero_when_ocr_returns_zero(monkeypatch):
     """
     OCR 결과가 "0"이면 near_zero True
     """
     from pipeline import prepare_phase_detector as mod
 
-    monkeypatch.setattr(
-        mod,
-        "_ocr_digits_seconds",
-        lambda img, cfg: 0
-    )
+    monkeypatch.setattr(mod, "_ocr_digits_seconds", lambda img, cfg: 0)
 
     img = make_dummy_img()
     assert is_timer_near_zero(img) is True
@@ -52,11 +47,7 @@ def test_timer_not_near_zero_when_ocr_returns_positive(monkeypatch):
     """
     from pipeline import prepare_phase_detector as mod
 
-    monkeypatch.setattr(
-        mod,
-        "_ocr_digits_seconds",
-        lambda img, cfg: 5
-    )
+    monkeypatch.setattr(mod, "_ocr_digits_seconds", lambda img, cfg: 5)
 
     img = make_dummy_img()
     assert is_timer_near_zero(img) is False
@@ -92,6 +83,7 @@ def test_timer_not_near_zero_when_ocr_fails_and_fallback_false(monkeypatch):
 # is_dual_timer_effective 테스트
 # ----------------------------
 
+
 def test_force_single_when_timer_zero(monkeypatch):
     """
     0초 순간이면 dual 판정이 True여도 False로 강제해야 함
@@ -102,11 +94,7 @@ def test_force_single_when_timer_zero(monkeypatch):
     monkeypatch.setattr(mod, "is_timer_near_zero", lambda img, cfg=None: True)
 
     # dual_timer_detector는 True라고 가정
-    monkeypatch.setattr(
-        mod,
-        "is_dual_sided_timer_cropped_symmetry",
-        lambda img, cfg=None: True
-    )
+    monkeypatch.setattr(mod, "is_dual_sided_timer_cropped_symmetry", lambda img, cfg=None: True)
 
     bar_img = make_dummy_img()
     digits_img = make_dummy_img()
@@ -121,11 +109,7 @@ def test_dual_when_not_zero_and_symmetry_true(monkeypatch):
     from pipeline import prepare_phase_detector as mod
 
     monkeypatch.setattr(mod, "is_timer_near_zero", lambda img, cfg=None: False)
-    monkeypatch.setattr(
-        mod,
-        "is_dual_sided_timer_cropped_symmetry",
-        lambda img, cfg=None: True
-    )
+    monkeypatch.setattr(mod, "is_dual_sided_timer_cropped_symmetry", lambda img, cfg=None: True)
 
     bar_img = make_dummy_img()
     digits_img = make_dummy_img()
@@ -140,11 +124,7 @@ def test_single_when_not_zero_and_symmetry_false(monkeypatch):
     from pipeline import prepare_phase_detector as mod
 
     monkeypatch.setattr(mod, "is_timer_near_zero", lambda img, cfg=None: False)
-    monkeypatch.setattr(
-        mod,
-        "is_dual_sided_timer_cropped_symmetry",
-        lambda img, cfg=None: False
-    )
+    monkeypatch.setattr(mod, "is_dual_sided_timer_cropped_symmetry", lambda img, cfg=None: False)
 
     bar_img = make_dummy_img()
     digits_img = make_dummy_img()

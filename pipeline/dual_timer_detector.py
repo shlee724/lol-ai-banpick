@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Tuple
 
-import numpy as np
 import cv2
+import numpy as np
 from PIL import Image
 
 
@@ -56,7 +56,9 @@ def _zscore_1d(x: np.ndarray, eps: float = 1e-6) -> Tuple[np.ndarray, float]:
     return (x - m) / (s + eps), s
 
 
-def _split_left_right_1d(x: np.ndarray, center_ignore_ratio: float) -> Tuple[np.ndarray, np.ndarray]:
+def _split_left_right_1d(
+    x: np.ndarray, center_ignore_ratio: float
+) -> Tuple[np.ndarray, np.ndarray]:
     w = int(x.shape[0])
     ci = float(center_ignore_ratio)
     ci = max(0.0, min(ci, 0.6))
@@ -138,7 +140,9 @@ def _lab_chroma_balance(rgb_arr: np.ndarray, cfg: SymmetryConfig) -> Tuple[float
 # ======================
 # Public API
 # ======================
-def is_dual_sided_timer_cropped_symmetry(img: Image.Image, cfg: SymmetryConfig = SymmetryConfig()) -> bool:
+def is_dual_sided_timer_cropped_symmetry(
+    img: Image.Image, cfg: SymmetryConfig = SymmetryConfig()
+) -> bool:
     rgb = img.convert("RGB")
     arr = np.asarray(rgb, dtype=np.uint8)
 

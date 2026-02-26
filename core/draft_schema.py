@@ -1,8 +1,9 @@
 # core/draft_schema.py
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Dict, List, Optional, Any
 
+import json
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 ROLE_ALIASES = {
     "top": "top",
@@ -23,8 +24,8 @@ CANON_ROLES = ["top", "jungle", "mid", "adc", "support"]
 
 @dataclass
 class PickedWithRoles:
-    my_team: Dict[str, Optional[str]]      # role -> champion
-    enemy_team: List[Optional[str]]        # len 5
+    my_team: Dict[str, Optional[str]]  # role -> champion
+    enemy_team: List[Optional[str]]  # len 5
     notes: str = ""
 
 
@@ -54,6 +55,7 @@ def normalize_picks_with_roles(data: Dict[str, Any]) -> PickedWithRoles:
 
     return PickedWithRoles(my_team=norm_my, enemy_team=norm_enemy, notes=notes)
 
+
 @dataclass
 class Bans10:
     bans: List[Optional[str]]  # len 10
@@ -73,6 +75,7 @@ def normalize_bans10(data: Dict[str, Any]) -> Bans10:
         norm.append(None)
 
     return Bans10(bans=norm, notes=notes)
+
 
 def safe_get_draft_fields(res):
     """

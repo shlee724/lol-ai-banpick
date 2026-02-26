@@ -1,7 +1,9 @@
 from pathlib import Path
+
 from PIL import Image
-from core.ocr_engine import extract_text
+
 from config.path import PATHS
+from core.ocr_engine import extract_text
 
 
 def run_batch_ocr():
@@ -11,10 +13,9 @@ def run_batch_ocr():
         print("❌ 테스트 이미지 폴더 없음:", img_dir)
         return
 
-    img_files = sorted([
-        p for p in img_dir.iterdir()
-        if p.suffix.lower() in [".png", ".jpg", ".jpeg"]
-    ])
+    img_files = sorted(
+        [p for p in img_dir.iterdir() if p.suffix.lower() in [".png", ".jpg", ".jpeg"]]
+    )
 
     print(f"📂 OCR 대상 이미지 수: {len(img_files)}")
 
@@ -25,10 +26,7 @@ def run_batch_ocr():
             img = Image.open(img_path)
             text = extract_text(img)
 
-            result = {
-                "file": img_path.name,
-                "text": text
-            }
+            result = {"file": img_path.name, "text": text}
 
             results.append(result)
 

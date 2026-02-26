@@ -29,7 +29,6 @@ from pipeline.pick_stage_detector import detect_pick_kind_from_banned_strips
 from pipeline.prepare_phase_detector import is_dual_timer_effective
 from pipeline.state_manager import StableStateManager
 
-
 # ======================
 # Config / Constants
 # ======================
@@ -43,8 +42,8 @@ DUAL_CONF_THRESHOLD = 0.72
 
 GEMINI_MODEL = "gemini-2.5-pro"
 
-MY_ROLE = "MID"       # TOP/JUNGLE/MID/ADC/SUPPORT
-MY_TIER = "BRONZE"    # UNRANKED/IRON/BRONZE/SILVER/GOLD/PLATINUM/EMERALD/DIAMOND/MASTER/GRANDMASTER/CHALLENGER
+MY_ROLE = "MID"  # TOP/JUNGLE/MID/ADC/SUPPORT
+MY_TIER = "BRONZE"  # UNRANKED/IRON/BRONZE/SILVER/GOLD/PLATINUM/EMERALD/DIAMOND/MASTER/GRANDMASTER/CHALLENGER
 MY_CHAMP_POOL = [
     "Malzahar",
     "Oriana",
@@ -65,7 +64,9 @@ WINDOW_TITLE = "League of Legends"
 # ======================
 # Helpers
 # ======================
-def merge_images_horizontal(img_left: Image.Image, img_right: Image.Image, bg_color=(255, 255, 255)) -> Image.Image:
+def merge_images_horizontal(
+    img_left: Image.Image, img_right: Image.Image, bg_color=(255, 255, 255)
+) -> Image.Image:
     """Create a new image by placing img_left and img_right side-by-side."""
     new_width = img_left.width + img_right.width
     new_height = max(img_left.height, img_right.height)
@@ -149,7 +150,7 @@ while True:
     picks_my_img = crop_roi_relative_xy(frame_img, window_size, ROI.PICKED_CHAMPIONS_MY_TEAM)
     picks_enemy_img = crop_roi_relative_xy(frame_img, window_size, ROI.PICKED_CHAMPIONS_ENEMY_TEAM)
 
-    bans_merged_img = merge_images_horizontal(bans_my_img, bans_enemy_img)
+    #bans_merged_img = merge_images_horizontal(bans_my_img, bans_enemy_img)
     picks_merged_img = merge_images_horizontal(picks_my_img, picks_enemy_img)
 
     timer_bar_img = crop_roi_relative_xy(frame_img, window_size, ROI.BANPICK_TIMER_BAR)

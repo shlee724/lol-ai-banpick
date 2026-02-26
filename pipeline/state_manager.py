@@ -1,5 +1,6 @@
 import time
 
+
 class StableStateManager:
     def __init__(self, min_duration=1.0, min_confidence=0.6):
         self.current_state = None

@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import time
 from pathlib import Path
-from typing import Iterator, Optional, Union, Tuple, List
+from typing import Iterator, List, Optional, Tuple, Union
 
 from dotenv import load_dotenv
 from google import genai

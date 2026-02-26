@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import numpy as np
+
 import cv2
+import numpy as np
 from PIL import Image
 
 
@@ -36,7 +37,11 @@ def detect_ban_strip_variance(
     h, w = gray.shape[:2]
     pad_x = int(w * 0.08)
     pad_y = int(h * 0.15)
-    inner = gray[pad_y:h - pad_y, pad_x:w - pad_x] if (h - 2*pad_y > 5 and w - 2*pad_x > 5) else gray
+    inner = (
+        gray[pad_y : h - pad_y, pad_x : w - pad_x]
+        if (h - 2 * pad_y > 5 and w - 2 * pad_x > 5)
+        else gray
+    )
 
     s = float(np.std(inner))
     is_filled = s >= std_threshold

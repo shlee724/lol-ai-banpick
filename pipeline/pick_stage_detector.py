@@ -1,11 +1,14 @@
 # pipeline/pick_stage_detector.py
 from dataclasses import dataclass
+
 from PIL import Image
 
 from pipeline.ban_detector import detect_ban_strip_variance
 
 
-def merge_images_horizontal(img1: Image.Image, img2: Image.Image, bg_color=(255, 255, 255)) -> Image.Image:
+def merge_images_horizontal(
+    img1: Image.Image, img2: Image.Image, bg_color=(255, 255, 255)
+) -> Image.Image:
     # tests/test_rois.py와 동일한 방식 :contentReference[oaicite:1]{index=1}
     new_width = img1.width + img2.width
     new_height = max(img1.height, img2.height)
@@ -18,7 +21,7 @@ def merge_images_horizontal(img1: Image.Image, img2: Image.Image, bg_color=(255,
 
 @dataclass
 class PickStageResult:
-    kind: str        # "PICK_REAL" | "PICK_FAKE"
+    kind: str  # "PICK_REAL" | "PICK_FAKE"
     std: float
 
 

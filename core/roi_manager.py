@@ -1,5 +1,6 @@
 from PIL import Image
 
+
 def crop_roi_definite_xy(img: Image.Image, x: int, y: int, w: int, h: int) -> Image.Image:
     """
     img: 전체 캡처 이미지
@@ -8,7 +9,10 @@ def crop_roi_definite_xy(img: Image.Image, x: int, y: int, w: int, h: int) -> Im
     """
     return img.crop((x, y, x + w, y + h))
 
-def crop_roi_relative_xy(img: Image.Image, window_size: tuple[int,int], roi: tuple[float, float, float, float]) -> Image.Image:
+
+def crop_roi_relative_xy(
+    img: Image.Image, window_size: tuple[int, int], roi: tuple[float, float, float, float]
+) -> Image.Image:
     """
     img: 전체 캡처 이미지
     window_size: 전체 캡처 이미지의 사이즈 (w, h)

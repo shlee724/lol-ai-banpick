@@ -1,5 +1,6 @@
 import re
 
+
 class TextNormalizer:
     def __init__(self):
         # 자주 깨지는 OCR 문자 치환 규칙

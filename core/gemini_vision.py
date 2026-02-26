@@ -1,18 +1,18 @@
 # core/gemini_vision.py
 from __future__ import annotations
 
-import os
 import json
+import os
+import re
 from dataclasses import dataclass
 from io import BytesIO
-from typing import Any, Dict, Optional
-import re
+from typing import Any, Dict, Iterator, Optional
 
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 from PIL import Image
-from typing import Iterator
+
 
 @dataclass
 class GeminiVisionResult:
@@ -60,6 +60,7 @@ def analyze_image(
 
 _JSON_FENCE_RE = re.compile(r"```(?:json)?\s*(\{.*?\}|\[.*?\])\s*```", re.DOTALL | re.IGNORECASE)
 
+
 def _extract_json_text(text: str) -> str:
     """
     Gemini가 ```json ... ``` 형태로 내놓거나 앞뒤에 잡텍스트를 붙여도
@@ -77,14 +78,14 @@ def _extract_json_text(text: str) -> str:
         start = t.find("{")
         end = t.rfind("}")
         if start < end:
-            return t[start:end + 1].strip()
+            return t[start : end + 1].strip()
 
     # 3) 리스트 JSON일 수도 있으니 []도 처리
     if "[" in t and "]" in t:
         start = t.find("[")
         end = t.rfind("]")
         if start < end:
-            return t[start:end + 1].strip()
+            return t[start : end + 1].strip()
 
     return t
 
@@ -105,10 +106,9 @@ def analyze_image_json(
         return json.loads(cleaned)
     except Exception as e:
         raise RuntimeError(
-            f"Gemini JSON 파싱 실패: {e}\n"
-            f"--- cleaned ---\n{cleaned}\n"
-            f"--- raw text ---\n{res.text}"
+            f"Gemini JSON 파싱 실패: {e}\n--- cleaned ---\n{cleaned}\n--- raw text ---\n{res.text}"
         )
+
 
 def analyze_image_stream(
     img: Image.Image,
@@ -136,6 +136,6 @@ def analyze_image_stream(
 
     for chunk in stream:
         # chunk.text가 None인 경우가 있을 수 있어 방어
-        t = (chunk.text or "")
+        t = chunk.text or ""
         if t:
             yield t

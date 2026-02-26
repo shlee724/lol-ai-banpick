@@ -1,8 +1,8 @@
 # core/ocr_engine.py
 
-import pytesseract
 import cv2
 import numpy as np
+import pytesseract
 from PIL import Image
 
 
@@ -27,10 +27,6 @@ def preprocess_for_ocr(pil_img: Image.Image):
 def extract_text(pil_img: Image.Image) -> str:
     processed = preprocess_for_ocr(pil_img)
 
-    text = pytesseract.image_to_string(
-        processed,
-        lang="kor",
-        config="--psm 6"
-    )
+    text = pytesseract.image_to_string(processed, lang="kor", config="--psm 6")
 
     return text.strip()

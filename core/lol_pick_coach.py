@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import time
 from pathlib import Path
-from typing import Iterator, Optional, Union, Tuple, List
+from typing import Iterator, List, Optional, Tuple, Union
 
 from dotenv import load_dotenv
 from google import genai
@@ -43,9 +43,11 @@ _PROMPT_LOL_MID_COACH = """너는 LoL 밴픽 코치다. 첨부된 이미지는 "
 # =========================
 _client_singleton: Optional[genai.Client] = None
 
+
 def get_client(api_key_env: str = "GEMINI_API_KEY") -> genai.Client:
     """외부에서 미리 client를 준비(워밍업)할 수 있게 공개 함수로 제공."""
     return _get_client(api_key_env=api_key_env)
+
 
 def _get_client(api_key_env: str = "GEMINI_API_KEY") -> genai.Client:
     global _client_singleton
@@ -55,7 +57,9 @@ def _get_client(api_key_env: str = "GEMINI_API_KEY") -> genai.Client:
     load_dotenv("config/.env")
     api_key = os.getenv(api_key_env)
     if not api_key:
-        raise RuntimeError(f"환경변수 {api_key_env} 가 비어 있습니다. .env 또는 환경변수를 확인하세요.")
+        raise RuntimeError(
+            f"환경변수 {api_key_env} 가 비어 있습니다. .env 또는 환경변수를 확인하세요."
+        )
 
     # 원본 코드의 http_options를 그대로 사용 :contentReference[oaicite:1]{index=1}
     _client_singleton = genai.Client(

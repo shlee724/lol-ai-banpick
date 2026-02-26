@@ -1,9 +1,10 @@
-from core.window_tracker import WindowTracker
-from core.screen_capture import capture_window
-from core.roi_manager import crop_roi_relative_xy
-from config.roi import ROI
-from config.path import PATHS
 import time
+
+from config.path import PATHS
+from config.roi import ROI
+from core.roi_manager import crop_roi_relative_xy
+from core.screen_capture import capture_window
+from core.window_tracker import WindowTracker
 
 tracker = WindowTracker("League of Legends")
 

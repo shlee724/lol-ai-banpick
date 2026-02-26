@@ -1,8 +1,9 @@
 from pathlib import Path
+
 from PIL import Image
 
-from pipeline.ban_detector import detect_ban_strip_variance
 from config.path import PATHS
+from pipeline.ban_detector import detect_ban_strip_variance
 
 
 def run_ban_detector_batch(std_threshold: float = 18.0):

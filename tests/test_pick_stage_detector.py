@@ -1,21 +1,20 @@
 # tests/test_pick_stage_detector.py
 
-from pathlib import Path
-from PIL import Image
-import time
 import re
+import time
+from pathlib import Path
+
+from PIL import Image
 
 from config.path import PATHS
 from config.roi import ROI
-from core.roi_manager import crop_roi_relative_xy
 from core.ocr_engine import extract_text
-
-from pipeline.normalizer import TextNormalizer
-from pipeline.classifier import StateClassifier
+from core.roi_manager import crop_roi_relative_xy
 from pipeline.buffer import StateBuffer
-from pipeline.state_manager import StableStateManager
+from pipeline.classifier import StateClassifier
+from pipeline.normalizer import TextNormalizer
 from pipeline.pick_stage_detector import detect_pick_kind_from_banned_strips
-
+from pipeline.state_manager import StableStateManager
 
 TS_PATTERN = re.compile(r".*_(\d{10,})\.(png|jpg|jpeg)$", re.IGNORECASE)
 
@@ -54,7 +53,9 @@ def run_offline_like_main(
         print("❌ lol_client 테스트 폴더 없음:", img_dir)
         return
 
-    img_files = sorted([p for p in img_dir.iterdir() if p.suffix.lower() in [".png", ".jpg", ".jpeg"]])
+    img_files = sorted(
+        [p for p in img_dir.iterdir() if p.suffix.lower() in [".png", ".jpg", ".jpeg"]]
+    )
     print(f"📂 lol_client 이미지 수: {len(img_files)}")
     print(
         f"설정: buffer={buffer_size}, min_duration={min_duration}, min_conf={min_confidence}, "

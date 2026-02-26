@@ -32,7 +32,6 @@ Rules:
 """.strip()
 
 
-
 BANNED_CHAMPS_PROMPT = """
 You are analyzing League of Legends champion select.
 Identify banned champions for both teams from this image.
@@ -142,6 +141,7 @@ Return JSON:
 }}
 """.strip()
 
+
 def build_draft_recommend_prompt(
     *,
     my_role: str,
@@ -172,9 +172,9 @@ def build_draft_recommend_prompt(
 - 밴된 챔피언 10개(왼→오, 팀 구분 없음): {bans_json}
 
 [요구사항]
-1) 추천은 **내 챔프폭**에서 우선적으로 해주되, 상대 라이너와의 상성이나 전체적인 조합을 고려하여 
+1) 추천은 **내 챔프폭**에서 우선적으로 해주되, 상대 라이너와의 상성이나 전체적인 조합을 고려하여
 **연습하고 있는 챔피언** 풀에 있는 챔피언이 더 좋다면 그것을 해줘. (밴/픽으로 불가능하면 챔프폭 밖도 가능)
-2) 가능하면 유력한 상대 라이너와의 라인전 상성을 우선 고려해주고, 
+2) 가능하면 유력한 상대 라이너와의 라인전 상성을 우선 고려해주고,
 내가 미드 라이너라면 두번째로 우리팀과 상대팀 미드정글 조합을 고려, 세번째로 전체 조합을 고려
 4) **밴 추천은 절대 하지 마.**
 5) 설명(reason, notes)은 **반드시 한글**로 작성해.

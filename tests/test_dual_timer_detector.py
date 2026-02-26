@@ -9,7 +9,6 @@ from config.path import PATHS
 from pipeline.dual_timer_detector import is_dual_sided_timer_cropped  # 실제 엔트리 함수명에 맞게
 
 
-
 def _infer_expected_from_name(name: str) -> Optional[bool]:
     n = name.lower()
 

@@ -1,10 +1,11 @@
-from core.window_tracker import WindowTracker
-from core.screen_capture import capture_window
-from core.roi_manager import crop_roi_definite_xy, crop_roi_relative_xy
-from config.roi import ROI
-from config.path import PATHS
-from core.ocr_engine import extract_text
 import time
+
+from config.path import PATHS
+from config.roi import ROI
+from core.ocr_engine import extract_text
+from core.roi_manager import crop_roi_relative_xy
+from core.screen_capture import capture_window
+from core.window_tracker import WindowTracker
 
 tracker = WindowTracker("League of Legends")
 
@@ -16,7 +17,7 @@ while True:
         img = capture_window(tracker.hwnd, w, h)
         img.save(PATHS.LOL_CLIENT_CAPTURE_PNG)
 
-        roi_img = crop_roi_relative_xy(img, window_size ,ROI.BANPICK_STATUS_TEXT)
+        roi_img = crop_roi_relative_xy(img, window_size, ROI.BANPICK_STATUS_TEXT)
         roi_img.save(PATHS.BANPICK_STATUS_TEXT_CAPTURE_PNG)
 
         text = extract_text(roi_img)

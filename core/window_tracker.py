@@ -1,9 +1,9 @@
 # core/window_tracker.py
 
-import win32gui
-import win32con
 import ctypes
-from typing import Tuple, Optional
+from typing import Optional, Tuple
+
+import win32gui
 
 
 class WindowTracker:
