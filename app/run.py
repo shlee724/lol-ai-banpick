@@ -1,3 +1,4 @@
+
 from __future__ import annotations
 
 import time
@@ -9,19 +10,16 @@ from config.path import PATHS
 from app.settings import AppSettings
 from app.wiring import AppDeps
 from app.frame_types import FrameContext
+from app.command_runner import CommandRunner
 
+def run_loop(settings: AppSettings, deps: AppDeps, stop_event: Optional[object] = None) -> None:
+    runner = CommandRunner(settings=settings, deps=deps)
 
-def run_loop(
-    settings: AppSettings,
-    deps: AppDeps,
-    stop_event: Optional[object] = None,  # threading.Event 같은 것(UI 대비)
-) -> None:
     while True:
         if stop_event is not None and getattr(stop_event, "is_set")():
             print("[INFO] stop_event set -> exit loop")
             return
 
-        # 1) Window / frame capture
         window_rect = deps.tracker.get_window_rect()
         if window_rect is None or not deps.tracker.hwnd:
             print("[WARN] 롤 클라이언트를 찾을 수 없음")
@@ -39,54 +37,40 @@ def run_loop(
             time.sleep(settings.sleep_sec)
             continue
 
-        # 2) ROI extraction
         rois = deps.roi_extractor.extract(frame_img, window_size)
 
         if settings.debug_save:
             frame_img.save(PATHS.LOL_CLIENT_CAPTURE_PNG)
             rois.status_img.save(PATHS.BANPICK_STATUS_TEXT_CAPTURE_PNG)
 
-        # 3) OCR + state pipeline
         state = deps.state_estimator.estimate(rois.status_img)
-
         ctx = FrameContext(rois=rois, state=state)
 
-        # 4) Workflow (현재: solo)
-        if state.stable_state == "PICK":
-            res = deps.workflow.on_pick(ctx)
-            if res.should_stop:
-                return
-
-        elif state.stable_state == "PREPARE":
-            dual_now = deps.workflow.get_dual_now(ctx)
-
-            deps.dual_buf.push(dual_now)
-            dual_stable = deps.dual_buf.get_majority()
-            dual_conf = deps.dual_buf.get_confidence()
-
-            print(f"[PREPARE] DualEffective: now={dual_now} stable={dual_stable} ({dual_conf:.2f})")
-
-            if dual_stable is True and dual_conf >= settings.dual_conf_threshold:
-                res = deps.workflow.on_prepare_dual_stable(ctx)
-                if res.should_stop:
-                    return
-
-        else:
-            deps.dual_buf.reset()
+        commands = deps.workflow.on_frame(ctx)
+        should_stop = runner.execute(ctx, commands)
+        if should_stop:
+            return
 
         time.sleep(settings.sleep_sec)
 
+FrameProvider = Callable[[], Optional[Tuple[Image.Image, Tuple[int, int], str]]]
 
-FrameProvider = Callable[[], Optional[Tuple[Image.Image, Tuple[int, int]]]]
-# 반환: (frame_img, (w,h)) / 더 이상 프레임 없으면 None
 
 def run_loop_with_provider(
     settings: AppSettings,
     deps: AppDeps,
     frame_provider: FrameProvider,
+    *,
     sleep_sec: Optional[float] = None,
-    stop_event: Optional[object] = None,  # UI 대비
+    stop_event: Optional[object] = None,
 ) -> None:
+    """
+    오프라인/재생용 루프.
+    - run_loop와 동일 엔진(ROI->State->Workflow->Commands->Runner)을 사용
+    - 캡처 대신 frame_provider가 프레임을 공급
+    - 더 이상 프레임이 없으면 종료
+    """
+    runner = CommandRunner(settings=settings, deps=deps)
     sleep = settings.sleep_sec if sleep_sec is None else sleep_sec
 
     while True:
@@ -99,7 +83,10 @@ def run_loop_with_provider(
             print("[INFO] no more frames -> exit loop")
             return
 
-        frame_img, window_size = provided
+        frame_img, window_size, frame_id = provided
+
+        # (선택) 프레임 식별 로그가 필요하면 여기서 찍으면 됨
+        # print(f"\n[FRAME] {frame_id}")
 
         rois = deps.roi_extractor.extract(frame_img, window_size)
 
@@ -108,29 +95,11 @@ def run_loop_with_provider(
             rois.status_img.save(PATHS.BANPICK_STATUS_TEXT_CAPTURE_PNG)
 
         state = deps.state_estimator.estimate(rois.status_img)
-
         ctx = FrameContext(rois=rois, state=state)
 
-        if state.stable_state == "PICK":
-            res = deps.workflow.on_pick(ctx)
-            if res.should_stop:
-                return
-
-        elif state.stable_state == "PREPARE":
-            dual_now = deps.workflow.get_dual_now(ctx)
-
-            deps.dual_buf.push(dual_now)
-            dual_stable = deps.dual_buf.get_majority()
-            dual_conf = deps.dual_buf.get_confidence()
-
-            print(f"[PREPARE] DualEffective: now={dual_now} stable={dual_stable} ({dual_conf:.2f})")
-
-            if dual_stable is True and dual_conf >= settings.dual_conf_threshold:
-                res = deps.workflow.on_prepare_dual_stable(ctx)
-                if res.should_stop:
-                    return
-
-        else:
-            deps.dual_buf.reset()
+        commands = deps.workflow.on_frame(ctx)
+        should_stop = runner.execute(ctx, commands)
+        if should_stop:
+            return
 
         time.sleep(sleep)

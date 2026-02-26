@@ -25,6 +25,9 @@ class AppDeps:
     state_estimator: StateEstimator
     dual_buf: StateBuffer
 
+    pick_client: object
+    playplan_client: object
+
     workflow: SoloWorkflow  # 지금은 solo만. 추후 UI 선택에 따라 다른 workflow를 꽂으면 됨.
 
 
@@ -50,14 +53,13 @@ def build_deps(settings: AppSettings) -> AppDeps:
     playplan_client = get_playplan_coach_client()
 
     workflow = SoloWorkflow(
-        pick_coach_client=pick_client,
-        playplan_client=playplan_client,
-        gemini_model=settings.gemini_model,
         pick_std_threshold=settings.pick_std_threshold,
         dual_conf_threshold=settings.dual_conf_threshold,
     )
 
     return AppDeps(
+        pick_client=pick_client,
+        playplan_client=playplan_client,
         tracker=tracker,
         roi_extractor=roi_extractor,
         state_estimator=state_estimator,

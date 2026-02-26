@@ -47,7 +47,7 @@ def make_folder_provider(
 
         frame = open_rgb(p)
         w, h = frame.size
-        return frame, (w, h)
+        return frame, (w, h), p.name
 
     def print_frame_header() -> None:
         p = last["p"]
