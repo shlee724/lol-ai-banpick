@@ -42,20 +42,6 @@ DUAL_CONF_THRESHOLD = 0.72
 
 GEMINI_MODEL = "gemini-2.5-pro"
 
-MY_ROLE = "MID"  # TOP/JUNGLE/MID/ADC/SUPPORT
-MY_TIER = "BRONZE"  # UNRANKED/IRON/BRONZE/SILVER/GOLD/PLATINUM/EMERALD/DIAMOND/MASTER/GRANDMASTER/CHALLENGER
-MY_CHAMP_POOL = [
-    "Malzahar",
-    "Oriana",
-    "Galio",
-    "Mundo",
-    "Garen",
-    "Malphite",
-    "Cho'gath",
-    "Nasus",
-    "kassadin",
-]
-
 DEBUG_SAVE = False
 
 WINDOW_TITLE = "League of Legends"

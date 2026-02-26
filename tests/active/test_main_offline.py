@@ -43,20 +43,6 @@ DUAL_CONF_THRESHOLD = 0.72
 
 GEMINI_MODEL = "gemini-2.5-pro"
 
-MY_ROLE = "MID"
-MY_TIER = "BRONZE"
-MY_CHAMP_POOL = [
-    "Malzahar",
-    "Oriana",
-    "Galio",
-    "Mundo",
-    "Garen",
-    "Malphite",
-    "Cho'gath",
-    "Nasus",
-    "kassadin",
-]
-
 DEBUG_SAVE = False
 
 
